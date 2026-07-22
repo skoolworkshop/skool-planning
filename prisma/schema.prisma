@@ -180,7 +180,7 @@ model TeacherProfile {
   lat          Float?
   lng          Float?
 
-  samenwerking String?       // ZZP, Loondienst, Vrijwilliger
+  samenwerking String?       // ZZP of FREELANCE, er is geen loondienst
   kvk          String?
   btwNummer    String?
   iban         String?
@@ -286,6 +286,8 @@ model Workshop {
   materialenDoor String? @default("Skool Workshop")
   klantBenodigdheden String? // tekst voor de bevestigingsmail: wat de opdrachtgever regelt
   voorbeeldLink String?      // link naar een voorbeeldfoto van de opstelling
+  afbeeldingUrl String?      // foto van skoolworkshop.nl
+  siteSlug      String?      // slug op skoolworkshop.nl, om de foto op te halen
   locatieEisen  String?
   doelgroepen   String[] @default([])
   minLeeftijd   Int?
@@ -764,4 +766,11 @@ model AccessCode {
   createdAt     DateTime     @default(now())
 
   @@index([enrollmentId])
+}
+
+/// Vrije instellingen van het systeem, bijvoorbeeld de tarieven.
+model Instelling {
+  sleutel   String   @id
+  waarde    String
+  updatedAt DateTime @updatedAt
 }
