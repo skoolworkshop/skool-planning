@@ -7,8 +7,15 @@ import { vulDemodata } from "../src/lib/seed-data";
 
 const db = new PrismaClient();
 
+type Uitvoer = {
+  workshops: number; docenten: number; klanten: number; opdrachten: number;
+  wachtwoord: string; accounts: string[];
+  inschrijving: { titel: string; leerlingen: number; klasCodes: string[]; schoolCode: string };
+};
+
 vulDemodata(db)
-  .then((r) => {
+  .then((res) => {
+    const r = res as unknown as Uitvoer;
     console.log("Klaar.");
     console.log("");
     console.log(`${r.workshops} workshops, ${r.docenten} docenten, ${r.klanten} klanten, ${r.opdrachten} opdrachten.`);

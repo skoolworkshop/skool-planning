@@ -64,6 +64,11 @@ Open in je browser:
 
 ```
 https://jouw-adres.vercel.app/api/seed?token=skool-start-2026
+
+Je krijgt een pagina met een voortgangsbalk en een knop naar de volgende stap.
+Het vullen gaat in zes stappen, zodat elke stap ruim binnen de tijdslimiet van
+Vercel blijft. Klik telkens door tot je "Klaar" ziet. Op het laatste scherm
+staan de inloggegevens en de toegangscodes voor de demo-inschrijving.
 ```
 
 Gebruik het token dat je zelf hebt ingevuld. Je krijgt een melding terug met het aantal
@@ -102,4 +107,5 @@ nieuwe versie. Je hoeft verder niets te doen.
 - Build faalt op `prisma db push`: je `DATABASE_URL` klopt niet of mist `?sslmode=require`
 - Inloggen werkt niet: `AUTH_SECRET` is korter dan 32 tekens
 - Links in e-mails kloppen niet: `APP_URL` staat nog leeg of verkeerd
-- `/api/seed` geeft 403: `SEED_TOKEN` staat leeg of het token in de link klopt niet
+- `/api/seed` meldt dat seeden uit staat: `SEED_TOKEN` staat leeg of het token in de link klopt niet
+- `/api/seed` geeft een timeout: open de stap opnieuw, hij pakt hem daarna weer op

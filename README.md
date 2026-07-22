@@ -104,7 +104,7 @@ Stap voor stap staat in `DEPLOY.md`. Kort samengevat:
 2. Zet de code in een GitHub repository
 3. Importeer de repository in Vercel en zet de omgevingsvariabelen
 4. Deploy. Het build commando draait `prisma generate` en `prisma db push`, dus de tabellen worden vanzelf aangemaakt
-5. Vul de demodata via `/api/seed?token=...` met het token uit `SEED_TOKEN`
+5. Vul de demodata via `/api/seed?token=...` met het token uit `SEED_TOKEN`. Dit loopt in zes stappen, klik telkens door naar de volgende
 6. Maak `SEED_TOKEN` daarna leeg
 
 Let op: dit is geen statische site. Zonder database werkt de app niet.
