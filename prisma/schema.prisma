@@ -284,6 +284,8 @@ model Workshop {
   voorbereidingstijd Int @default(30)
   materialen    String?
   materialenDoor String? @default("Skool Workshop")
+  klantBenodigdheden String? // tekst voor de bevestigingsmail: wat de opdrachtgever regelt
+  voorbeeldLink String?      // link naar een voorbeeldfoto van de opstelling
   locatieEisen  String?
   doelgroepen   String[] @default([])
   minLeeftijd   Int?
@@ -309,6 +311,7 @@ model Client {
   naam        String
   type        ClientType @default(BASISSCHOOL)
   doelgroep   String?
+  cjpNummer   String?   // Cultuurkaart / CJP schoolnummer, alleen bij onderwijsklanten
   factuurEmail String?
   factuurAdres String?
   btwNummer   String?
@@ -385,6 +388,7 @@ model Project {
   eindDatum    DateTime?
   notitie      String?
   interneNotitie String?
+  aantalPersonenTekst String? // vrije tekst voor de bevestiging, bijv. "Maximaal 25 per workshop"
   omzet        Decimal       @default(0) @db.Decimal(10, 2)
   materiaalkosten Decimal    @default(0) @db.Decimal(10, 2)
   facturatieStatus String    @default("NOG_NIET")
@@ -415,6 +419,7 @@ model WorkshopSession {
   startTijd    String        // "09:00"
   eindTijd     String        // "12:30"
   aanwezigVanaf String?
+  afbouwTot    String?       // eindtijd afbouw en vertrek
   deelnemers   Int           @default(0)
   leeftijd     String?
   doelgroep    String?
@@ -449,6 +454,8 @@ model WorkshopRound {
   startTijd String
   eindTijd  String
   groep     String?
+  afdeling  String?         // bijvoorbeeld 4VWO of 4HAVO, voor een eigen tijdschema
+  aantalGroepen Int         @default(1) // parallelle groepen van deze workshop in deze ronde
   deelnemers Int            @default(0)
 
   @@unique([sessionId, nummer])
