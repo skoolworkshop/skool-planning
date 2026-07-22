@@ -62,12 +62,12 @@ export default function PositiePaneel({
         <div className="mb-4 flex flex-wrap gap-2">
           {!positie.gepubliceerd && (
             <button className="knop-primair" disabled={bezig}
-              onClick={() => doe(() => positiePubliceren(positie.id), "Positie gepubliceerd en passende docenten zijn gemeld.")}>
+              onClick={() => doe(() => positiePubliceren(positie.id), "Positie gepubliceerd en passende workshopdocenten zijn gemeld.")}>
               Publiceren voor docenten
             </button>
           )}
           <button className="knop-secundair" onClick={() => setToonMatch(!toonMatch)}>
-            {toonMatch ? "Verberg voorgestelde docenten" : "Toon voorgestelde docenten"}
+            {toonMatch ? "Verberg voorgestelde workshopdocenten" : "Toon voorgestelde workshopdocenten"}
           </button>
         </div>
       )}
@@ -151,7 +151,7 @@ export default function PositiePaneel({
       {/* Matching */}
       {magPlannen && toonMatch && (
         <>
-          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-neutral-500">Voorgestelde docenten</h3>
+          <h3 className="mb-2 text-sm font-semibold uppercase tracking-wide text-neutral-500">Voorgestelde workshopdocenten</h3>
           <p className="mb-2 text-xs text-neutral-500">
             Dit is een hulpmiddel. Jij maakt altijd zelf de keuze. Waarschuwingen sluiten niemand automatisch uit.
           </p>

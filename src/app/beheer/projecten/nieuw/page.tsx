@@ -2,7 +2,7 @@ import { db } from "@/lib/db";
 import { vereisRol } from "@/lib/auth";
 import { PLANNEN } from "@/lib/rbac";
 import { PaginaKop } from "@/components/ui";
-import Wizard from "./Wizard";
+import SnelPlannen from "./SnelPlannen";
 
 export const dynamic = "force-dynamic";
 
@@ -14,13 +14,20 @@ export default async function NieuwProject() {
       include: { locations: true, contacts: true },
       orderBy: { naam: "asc" },
     }),
-    db.workshop.findMany({ where: { actief: true }, include: { category: true }, orderBy: { naam: "asc" } }),
+    db.workshop.findMany({
+      where: { actief: true },
+      include: { category: true },
+      orderBy: [{ category: { volgorde: "asc" } }, { naam: "asc" }],
+    }),
   ]);
 
   return (
     <>
-      <PaginaKop titel="Nieuw project" sub="Eén project met één of meerdere workshopmomenten" />
-      <Wizard
+      <PaginaKop
+        titel="Nieuwe opdracht"
+        sub="Kies meerdere workshops tegelijk. Het tijdschema maakt zichzelf."
+      />
+      <SnelPlannen
         klanten={klanten.map((k) => ({
           id: k.id,
           naam: k.naam,
@@ -31,9 +38,10 @@ export default async function NieuwProject() {
           id: w.id,
           naam: w.naam,
           categorie: w.category.naam,
+          kleur: w.category.kleur,
           duur: w.standaardDuur,
           vergoeding: Number(w.standaardVergoeding),
-          docenten: w.docentenPerGroep,
+          afbeeldingUrl: w.afbeeldingUrl,
         }))}
       />
     </>

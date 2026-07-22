@@ -14,7 +14,7 @@ export default function UitnodigenForm() {
     start(async () => {
       const res = await docentUitnodigen(fd);
       if (res?.fout) setFout(res.fout);
-      else { setBericht("Uitnodiging verstuurd. De docent ontvangt een activatielink."); setOpen(false); }
+      else { setBericht("Uitnodiging verstuurd. De workshopdocent ontvangt een activatielink."); setOpen(false); }
     });
   }
 
@@ -22,7 +22,7 @@ export default function UitnodigenForm() {
     <div className="mb-4">
       {!open && (
         <button onClick={() => setOpen(true)} className="knop-primair">
-          Docent uitnodigen
+          Workshopdocent uitnodigen
         </button>
       )}
       {bericht && <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-800">{bericht}</p>}

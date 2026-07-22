@@ -92,7 +92,7 @@ export default async function OpdrachtDetail({ params }: { params: { id: string 
             />
           ))}
           {s.positions.length === 0 && (
-            <Kaart><p className="text-sm text-neutral-500">Er zijn nog geen docentposities aangemaakt voor deze opdracht.</p></Kaart>
+            <Kaart><p className="text-sm text-neutral-500">Er zijn nog geen workshopdocentposities aangemaakt voor deze opdracht.</p></Kaart>
           )}
         </div>
 

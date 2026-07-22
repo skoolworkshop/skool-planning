@@ -87,7 +87,7 @@ export default function Rondes({ sessionId, workshopNaam, aanwezigVanaf, afbouwT
     <div className="rounded-lg border border-neutral-200 bg-neutral-50 p-3">
       <div className="mb-3 grid gap-3 sm:grid-cols-2">
         <div>
-          <label className="label" htmlFor={`aank-${sessionId}`}>Aankomst docent</label>
+          <label className="label" htmlFor={`aank-${sessionId}`}>Aankomst workshopdocent</label>
           <input id={`aank-${sessionId}`} type="time" value={aankomst} onChange={(e) => setAankomst(e.target.value)} className="veld" />
         </div>
         <div>

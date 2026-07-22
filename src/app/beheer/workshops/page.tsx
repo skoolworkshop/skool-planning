@@ -3,6 +3,7 @@ import { vereisGebruiker } from "@/lib/auth";
 import { PaginaKop, Kaart, Badge } from "@/components/ui";
 import { euro, label } from "@/lib/format";
 import Benodigdheden from "./Benodigdheden";
+import Afbeeldingen from "./Afbeeldingen";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,11 @@ export default async function WorkshopsPagina() {
 
   return (
     <>
-      <PaginaKop titel="Workshops" sub="De centrale catalogus. De benodigdheden per workshop komen automatisch in de bevestigingsmail." />
+      <PaginaKop
+        titel="Workshops"
+        sub="De centrale catalogus. De benodigdheden per workshop komen automatisch in de bevestigingsmail."
+        actie={<Afbeeldingen />}
+      />
       <div className="space-y-6">
         {categorieen.map((c) => (
           <section key={c.id}>
@@ -27,6 +32,17 @@ export default async function WorkshopsPagina() {
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {c.workshops.map((w) => (
                 <Kaart key={w.id}>
+                  <div className="-mx-4 -mt-4 mb-3 h-32 overflow-hidden rounded-t-xl bg-zand-100">
+                    {w.afbeeldingUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={w.afbeeldingUrl} alt={w.naam} className="h-full w-full object-cover" loading="lazy" />
+                    ) : (
+                      <div className="flex h-full items-center justify-center" style={{ background: c.kleur + "22" }}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/beeldmerk.png" alt="" className="h-12 w-auto opacity-40" />
+                      </div>
+                    )}
+                  </div>
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-semibold">{w.naam}</h3>
                     {!w.actief && <Badge kleur="grijs">Inactief</Badge>}
@@ -36,7 +52,7 @@ export default async function WorkshopsPagina() {
                     <div className="flex justify-between"><dt>Duur</dt><dd>{w.standaardDuur} minuten</dd></div>
                     <div className="flex justify-between"><dt>Maximale groep</dt><dd>{w.maxGroep}</dd></div>
                     <div className="flex justify-between"><dt>Standaardvergoeding</dt><dd>{euro(w.standaardVergoeding)}</dd></div>
-                    <div className="flex justify-between"><dt>Docenten met deze workshop</dt><dd>{w._count.skills}</dd></div>
+                    <div className="flex justify-between"><dt>Workshopdocenten met deze workshop</dt><dd>{w._count.skills}</dd></div>
                     <div className="flex justify-between"><dt>Ingepland</dt><dd>{w._count.sessions}x</dd></div>
                   </dl>
                   {w.vereisteDocumenten.length > 0 && (

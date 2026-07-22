@@ -145,7 +145,7 @@ export default function Rondes({
                       <div className="font-medium">{s.workshop}</div>
                       <div className="text-neutral-500">
                         {s.ruimte ?? "ruimte nog niet bekend"}
-                        {s.docent ? ` · ${s.docent}` : " · nog geen docent"}
+                        {s.docent ? ` · ${s.docent}` : " · nog geen workshopdocent"}
                       </div>
                     </div>
                     <div className="w-32">

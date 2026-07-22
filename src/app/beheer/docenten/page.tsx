@@ -40,7 +40,7 @@ export default async function DocentenPagina({ searchParams }: { searchParams: {
 
   return (
     <>
-      <PaginaKop titel="Docenten" sub={`${docenten.length} docenten gevonden`} />
+      <PaginaKop titel="Workshopdocenten" sub={`${docenten.length} docenten gevonden`} />
 
       {u.role !== "LEZER" && <UitnodigenForm />}
 
@@ -57,7 +57,7 @@ export default async function DocentenPagina({ searchParams }: { searchParams: {
       </form>
 
       {docenten.length === 0 ? (
-        <Leeg titel="Geen docenten gevonden" tekst="Pas je zoekopdracht aan of nodig een nieuwe docent uit." />
+        <Leeg titel="Geen workshopdocenten gevonden" tekst="Pas je zoekopdracht aan of nodig een nieuwe docent uit." />
       ) : (
         <Kaart className="overflow-x-auto p-0 sm:p-0">
           <table className="tabel">

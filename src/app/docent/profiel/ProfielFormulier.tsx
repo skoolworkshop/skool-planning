@@ -71,9 +71,8 @@ export default function ProfielFormulier({ profiel }: { profiel: Profiel }) {
             <label className="label" htmlFor="samenwerking">Samenwerkingsvorm</label>
             <select id="samenwerking" name="samenwerking" defaultValue={profiel.samenwerking} className="veld">
               <option value="">Kies</option>
-              <option value="ZZP">ZZP met factuur</option>
-              <option value="LOONDIENST">Loondienst</option>
-              <option value="VRIJWILLIGER">Vrijwilliger</option>
+              <option value="ZZP">ZZP met eigen KvK</option>
+              <option value="FREELANCE">Freelance zonder KvK</option>
             </select>
           </div>
           <Veld naam="kvk" titel="KVK nummer" waarde={profiel.kvk} />

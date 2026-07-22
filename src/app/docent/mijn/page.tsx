@@ -18,7 +18,7 @@ const TABS = [
 export default async function MijnOpdrachten({ searchParams }: { searchParams: { tab?: string } }) {
   const u = await vereisGebruiker();
   const t = await db.teacherProfile.findUnique({ where: { userId: u.id } });
-  if (!t) return <Melding soort="fout">Geen docentprofiel gevonden.</Melding>;
+  if (!t) return <Melding soort="fout">Geen workshopdocentprofiel gevonden.</Melding>;
 
   const tab = searchParams.tab ?? "komend";
   const nu = new Date();

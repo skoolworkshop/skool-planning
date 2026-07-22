@@ -12,7 +12,7 @@ export default async function DocentHome() {
     where: { userId: u.id },
     include: { skills: true, documents: true },
   });
-  if (!t) return <Melding soort="fout">Er is nog geen docentprofiel gekoppeld aan dit account.</Melding>;
+  if (!t) return <Melding soort="fout">Er is nog geen workshopdocentprofiel gekoppeld aan dit account.</Melding>;
 
   const nu = new Date();
   const [uitnodigingen, komende, openPosities, teDeclareren] = await Promise.all([

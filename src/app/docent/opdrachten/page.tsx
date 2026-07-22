@@ -3,13 +3,14 @@ import { db } from "@/lib/db";
 import { vereisGebruiker } from "@/lib/auth";
 import { Kaart, Badge, Leeg, Melding } from "@/components/ui";
 import { datum, euro, afstandKm, reistijdMin } from "@/lib/format";
+import { binnenReisafstand } from "@/lib/tarieven";
 
 export const dynamic = "force-dynamic";
 
 export default async function OpenOpdrachten({ searchParams }: { searchParams: { q?: string; max?: string } }) {
   const u = await vereisGebruiker();
   const t = await db.teacherProfile.findUnique({ where: { userId: u.id }, include: { skills: true } });
-  if (!t) return <Melding soort="fout">Geen docentprofiel gevonden.</Melding>;
+  if (!t) return <Melding soort="fout">Geen workshopdocentprofiel gevonden.</Melding>;
 
   if (t.status !== "GOEDGEKEURD") {
     return (
@@ -61,12 +62,25 @@ export default async function OpenOpdrachten({ searchParams }: { searchParams: {
       return { p, km, vrij: p.aantal - p.assignments.filter((a) => !a.reserve && !a.uitgevallen).length };
     })
     .filter((x) => x.vrij > 0)
+    // Buiten de eigen maximale reisafstand tonen we een opdracht niet
+    .filter((x) => binnenReisafstand(x.km, t.maxReisAfstand))
     .filter((x) => (maxAfstand && x.km !== null ? x.km <= maxAfstand : true));
+
+  const verborgen = posities
+    .map((p) => ({ km: afstandKm(t, p.session.location ?? undefined), vrij: p.aantal - p.assignments.filter((a) => !a.reserve && !a.uitgevallen).length }))
+    .filter((x) => x.vrij > 0 && !binnenReisafstand(x.km, t.maxReisAfstand)).length;
 
   return (
     <>
       <h1 className="mb-1 text-xl font-bold">Open opdrachten</h1>
-      <p className="mb-4 text-sm text-neutral-500">{kaarten.length} opdrachten die bij jouw workshops passen</p>
+      <p className="mb-4 text-sm text-neutral-500">
+        {kaarten.length} opdrachten die bij jouw workshops passen
+        {verborgen > 0 && (
+          <>
+            {" "}· <span className="text-neutral-400">{verborgen} verborgen omdat ze verder liggen dan je maximale reisafstand van {t.maxReisAfstand} km</span>
+          </>
+        )}
+      </p>
 
       <form className="mb-4 flex gap-2">
         <input name="q" defaultValue={q} placeholder="Zoek op workshop, plaats of klant" className="veld" aria-label="Zoeken" />

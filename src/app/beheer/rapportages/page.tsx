@@ -95,7 +95,7 @@ export default async function RapportagesPagina({ searchParams }: { searchParams
       </div>
 
       <div className="mt-5 grid gap-5 sm:grid-cols-3">
-        <Stat titel="Goedgekeurde docenten" waarde={docenten} />
+        <Stat titel="Goedgekeurde workshopdocenten" waarde={docenten} />
         <Stat titel="Gereden kilometers" waarde={`${kilometers} km`} />
         <Stat titel="Declaraties" waarde={declaraties.length} />
       </div>

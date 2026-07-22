@@ -3,6 +3,8 @@ import { vereisGebruiker } from "@/lib/auth";
 import { ROL_LABEL } from "@/lib/rbac";
 import { notifyDevMode, TEMPLATES } from "@/lib/notify";
 import { PaginaKop, Kaart, Badge, Melding } from "@/components/ui";
+import TarievenFormulier from "./Tarieven";
+import { haalTarieven } from "@/lib/tarief-acties";
 import { datumTijd, label } from "@/lib/format";
 import { uitloggenOveral } from "@/lib/acties";
 import Medewerkers from "./Medewerkers";
@@ -21,7 +23,13 @@ export default async function InstellingenPagina() {
 
   return (
     <>
-      <PaginaKop titel="Instellingen" sub="Berichten, auditlog en gebruikers" />
+      <PaginaKop titel="Instellingen" sub="Tarieven, berichten, auditlog en gebruikers" />
+
+      <Kaart className="mb-5">
+        <h2 className="mb-1 font-semibold">Tarieven workshopdocenten</h2>
+        <p className="mb-4 text-sm text-neutral-500">Deze bedragen gelden voor alle nieuwe berekeningen.</p>
+        <TarievenFormulier tarieven={await haalTarieven()} />
+      </Kaart>
 
       {notifyDevMode && (
         <div className="mb-5">

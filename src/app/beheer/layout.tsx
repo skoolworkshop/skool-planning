@@ -13,7 +13,7 @@ const ITEMS: NavItem[] = [
   { href: "/beheer/opdrachten", label: "Opdrachten", icoon: "📌" },
   { href: "/beheer/aanmeldingen", label: "Aanmeldingen", icoon: "✋" },
   { href: "/beheer/inschrijvingen", label: "Inschrijvingen", icoon: "📝" },
-  { href: "/beheer/docenten", label: "Docenten", icoon: "👥" },
+  { href: "/beheer/docenten", label: "Workshopdocenten", icoon: "👥" },
   { href: "/beheer/klanten", label: "Klanten", icoon: "🏫" },
   { href: "/beheer/workshops", label: "Workshops", icoon: "🎨" },
   { href: "/beheer/financieel", label: "Financieel", icoon: "💶" },

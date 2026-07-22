@@ -127,7 +127,7 @@ export default async function InschrijvingPagina({ params }: { params: { id: str
         <Kaart>
           <h2 className="font-semibold">Downloads</h2>
           <p className="mt-1 text-sm text-neutral-500">
-            Alles wat de school en de docenten op de dag zelf nodig hebben.
+            Alles wat de school en de workshopdocenten op de dag zelf nodig hebben.
           </p>
           <div className="mt-3 space-y-3">
             {([

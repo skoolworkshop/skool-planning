@@ -98,7 +98,7 @@ export default async function ProjectDetail({ params }: { params: { id: string }
                       <Link href={`/beheer/opdrachten/${s.id}`} className="font-medium hover:text-skool-600">{s.workshop.naam}</Link>
                       <span className="text-sm text-neutral-500">{datum(s.datum)} · {s.startTijd} tot {s.eindTijd}</span>
                       <span className="text-xs text-neutral-500">{s.rounds.length} rondes, {groepen} groepen</span>
-                      <Badge kleur={bezet >= nodig ? "groen" : bezet > 0 ? "geel" : "rood"}>{bezet} van {nodig} docenten</Badge>
+                      <Badge kleur={bezet >= nodig ? "groen" : bezet > 0 ? "geel" : "rood"}>{bezet} van {nodig} workshopdocenten</Badge>
                       <Badge kleur={statusKleur(s.status)}>{label(s.status)}</Badge>
                     </div>
                     <Rondes
@@ -167,7 +167,7 @@ export default async function ProjectDetail({ params }: { params: { id: string }
           <Kaart>
             <h2 className="mb-2 font-semibold">Financieel</h2>
             <Rij label="Omzet">{euro(p.omzet)}</Rij>
-            <Rij label="Verwachte docentkosten">{euro(docentkosten)}</Rij>
+            <Rij label="Verwachte kosten workshopdocenten">{euro(docentkosten)}</Rij>
             <Rij label="Materiaalkosten">{euro(p.materiaalkosten)}</Rij>
             <Rij label="Verwachte marge">
               <span className={marge < 0 ? "text-red-700" : "text-emerald-700"}>{euro(marge)}</span>

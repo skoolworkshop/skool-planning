@@ -70,7 +70,7 @@ export default async function OpdrachtDetailDocent({ params }: { params: { id: s
           <Rij label="Bijzonderheden">{s.bijzonderheden}</Rij>
           {s.workshop.docentInstructie && (
             <div className="mt-3 rounded-lg bg-neutral-50 p-3 text-sm">
-              <div className="mb-1 font-medium">Instructie voor de docent</div>
+              <div className="mb-1 font-medium">Instructie voor de workshopdocent</div>
               <p className="whitespace-pre-line text-neutral-700">{s.workshop.docentInstructie}</p>
             </div>
           )}
