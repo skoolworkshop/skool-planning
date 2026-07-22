@@ -40,6 +40,30 @@ const CATEGORIEEN = [
   { naam: "Sport en spel", kleur: "#ef4444", volgorde: 5 },
 ];
 
+const BENODIGDHEDEN: Record<string, string> = {
+  "Djembé en Percussie":
+    "De opdrachtgever regelt een geschikte ruimte op de begane grond, waar de tafels aan de kant kunnen worden geschoven. Zet stoelen zonder armleuningen klaar in rijen van ongeveer vijf naast elkaar. Let op: het kan er lekker luid aan toe gaan, dat hoort bij de energie van de workshop.",
+  "Graffiti en Streetart":
+    "De opdrachtgever zorgt voor een ruimte waar gespoten mag worden, het liefst buiten of in een goed geventileerde ruimte. Wij nemen zeilen mee om de vloer af te dekken.",
+  Streetdance:
+    "De opdrachtgever zorgt voor een ruime, open ruimte met een gladde vloer. Tafels en stoelen graag vooraf aan de kant, zodat er volop plek is om te bewegen.",
+  Breakdance:
+    "De opdrachtgever zorgt voor een gymzaal of aula met een vlakke vloer. Deelnemers dragen makkelijk zittende kleding en schone binnenschoenen.",
+  Bubbelvoetbal:
+    "De opdrachtgever zorgt voor een gymzaal, sportveld of andere ruime locatie met minimaal drie meter hoogte. Deelnemers dragen sportkleding en schoenen waarin ze vrij kunnen bewegen.",
+  "DJ Workshop":
+    "De opdrachtgever zorgt voor een ruimte met stroom en voldoende stopcontacten. Tafels aan de zijkant, zodat de DJ-set centraal kan staan.",
+  "Rap en Songwriting":
+    "De opdrachtgever zorgt voor een rustige ruimte met stroom, waar de groep in een kring kan zitten. Een tweede kleine ruimte om op te nemen is fijn maar niet verplicht.",
+  "Virtual Reality Beleving":
+    "De opdrachtgever zorgt voor een ruimte waarin deelnemers veilig een paar stappen kunnen zetten, met stroom in de buurt. Losse obstakels graag vooraf aan de kant.",
+};
+
+const VOORBEELD_LINKS: Record<string, string> = {
+  "Djembé en Percussie": "https://www.skoolworkshop.nl/opstelling-percussie",
+  Streetdance: "https://www.skoolworkshop.nl/opstelling-dans",
+};
+
 const WORKSHOPS_DATA: {
   naam: string; cat: string; duur: number; vergoeding: number; docs: DocType[];
   doelgroepen: string[]; materialen: string; maxGroep: number;
@@ -73,6 +97,8 @@ const DOCENTEN_DATA = [
   { v: "Sem", a: "Hoogland", plaats: "Roosendaal", pc: "4701 JJ", lat: 51.5308, lng: 4.4653, ws: [13, 14] },
   { v: "Amira", a: "Yildiz", plaats: "Tilburg", pc: "5038 KK", lat: 51.5555, lng: 5.0913, ws: [12, 11, 1] },
 ];
+
+const ONDERWIJS_TYPES = ["BASISSCHOOL", "VOORTGEZET_ONDERWIJS", "MBO", "HBO", "UNIVERSITEIT"];
 
 const KLANTEN_DATA = [
   { naam: "Basisschool De Regenboog", type: "BASISSCHOOL", plaats: "Breda", lat: 51.5912, lng: 4.7761 },
@@ -176,6 +202,8 @@ export async function stapBasis(db: PrismaClient) {
       voorbereidingstijd: 30,
       materialen: w.materialen,
       materialenDoor: "Skool Workshop",
+      klantBenodigdheden: BENODIGDHEDEN[w.naam] ?? null,
+      voorbeeldLink: VOORBEELD_LINKS[w.naam] ?? null,
       doelgroepen: w.doelgroepen,
       vereisteDocumenten: w.docs,
       docentInstructie: "Wees een half uur voor aanvang aanwezig en meld je bij de contactpersoon.",
@@ -317,6 +345,7 @@ export async function stapKlanten(db: PrismaClient) {
         klantnummer: `KL-${String(1001 + i)}`,
         naam: k.naam,
         type: k.type as never,
+        cjpNummer: ONDERWIJS_TYPES.includes(k.type) ? `CJP-${20250 + i}` : null,
         factuurEmail: `administratie${i + 1}@example.com`,
         factuurAdres: `Postbus ${100 + i}, ${k.plaats}`,
         betaaltermijn: 30,
@@ -574,7 +603,159 @@ export async function stapOpdrachten(db: PrismaClient) {
     data: { status: "GEANNULEERD", bijzonderheden: "Geannuleerd door de klant wegens ziekte van de groep." },
   });
 
-  return { opdrachten: AANTAL_OPDRACHTEN };
+  // Voorbeeld 1: cultuurdag met vier workshops naast elkaar in vier rondes
+  await voorbeelddag(db, {
+    ordernummer: `SW${jaar}-${String(AANTAL_OPDRACHTEN + 1).padStart(4, "0")}`,
+    klant: klanten[4],
+    naam: `Cultuurdag bij ${klanten[4].naam}`,
+    datum: dagen(38),
+    aantalPersonenTekst: "Maximaal 25 per workshop",
+    omzet: 4680,
+    workshops,
+    onderdelen: [
+      { index: 2, aanwezigVanaf: "09:30", afbouwTot: "14:45", rondes: [
+        { nummer: 1, start: "10:00", eind: "11:00", groepen: 1 },
+        { nummer: 2, start: "11:00", eind: "12:00", groepen: 1 },
+        { nummer: 3, start: "12:30", eind: "13:30", groepen: 1 },
+      ] },
+      { index: 10, aanwezigVanaf: "09:30", afbouwTot: "14:45", rondes: [
+        { nummer: 1, start: "10:00", eind: "11:00", groepen: 1 },
+        { nummer: 2, start: "11:00", eind: "12:00", groepen: 1 },
+        { nummer: 3, start: "12:30", eind: "13:30", groepen: 1 },
+        { nummer: 4, start: "13:30", eind: "14:30", groepen: 2 },
+      ] },
+      { index: 3, aanwezigVanaf: "09:30", afbouwTot: "14:45", rondes: [
+        { nummer: 1, start: "10:00", eind: "11:00", groepen: 1 },
+        { nummer: 2, start: "11:00", eind: "12:00", groepen: 1 },
+        { nummer: 3, start: "12:30", eind: "13:30", groepen: 1 },
+        { nummer: 4, start: "13:30", eind: "14:30", groepen: 1 },
+      ] },
+      { index: 13, aanwezigVanaf: "09:30", afbouwTot: "14:45", rondes: [
+        { nummer: 1, start: "10:00", eind: "11:00", groepen: 1 },
+        { nummer: 2, start: "11:00", eind: "12:00", groepen: 2 },
+        { nummer: 3, start: "12:30", eind: "13:30", groepen: 1 },
+        { nummer: 4, start: "13:30", eind: "14:30", groepen: 1 },
+      ] },
+    ],
+  });
+
+  // Voorbeeld 2: introductiedag met een eigen tijdschema per afdeling
+  await voorbeelddag(db, {
+    ordernummer: `SW${jaar}-${String(AANTAL_OPDRACHTEN + 2).padStart(4, "0")}`,
+    klant: klanten[2],
+    naam: `Introductiedag 4VWO en 4HAVO bij ${klanten[2].naam}`,
+    datum: dagen(52),
+    aantalPersonenTekst: "220, verdeeld over 4VWO en 4HAVO",
+    omzet: 5240,
+    workshops,
+    onderdelen: [
+      { index: 4, aanwezigVanaf: "09:30", afbouwTot: "12:15", rondes: [
+        { nummer: 1, start: "10:00", eind: "11:00", afdeling: "4VWO", groepen: 4 },
+        { nummer: 2, start: "11:00", eind: "12:00", afdeling: "4HAVO", groepen: 4 },
+      ] },
+      { index: 1, aanwezigVanaf: "10:45", afbouwTot: "13:30", rondes: [
+        { nummer: 1, start: "11:15", eind: "12:15", afdeling: "4VWO", groepen: 2 },
+        { nummer: 2, start: "12:15", eind: "13:15", afdeling: "4HAVO", groepen: 2 },
+      ] },
+      { index: 10, aanwezigVanaf: "10:45", afbouwTot: "13:30", rondes: [
+        { nummer: 1, start: "11:15", eind: "12:15", afdeling: "4VWO", groepen: 1 },
+        { nummer: 2, start: "12:15", eind: "13:15", afdeling: "4HAVO", groepen: 1 },
+      ] },
+      { index: 2, aanwezigVanaf: "10:45", afbouwTot: "13:30", rondes: [
+        { nummer: 1, start: "11:15", eind: "12:15", afdeling: "4VWO", groepen: 1 },
+        { nummer: 2, start: "12:15", eind: "13:15", afdeling: "4HAVO", groepen: 1 },
+      ] },
+    ],
+  });
+
+  return { opdrachten: AANTAL_OPDRACHTEN + 2 };
+}
+
+
+/* ---------- Twee voorbeelddagen met meerdere workshops op één dag ---------- */
+
+type DagWorkshop = {
+  index: number;
+  aanwezigVanaf: string;
+  afbouwTot: string;
+  rondes: { nummer: number; start: string; eind: string; afdeling?: string; groepen: number }[];
+};
+
+async function voorbeelddag(
+  db: PrismaClient,
+  opties: {
+    ordernummer: string;
+    klant: { id: string; naam: string; locations: { id: string }[]; contacts: { id: string }[] };
+    naam: string;
+    datum: Date;
+    aantalPersonenTekst: string;
+    omzet: number;
+    workshops: { id: string; naam: string; standaardDuur: number; standaardVergoeding: unknown; vereisteDocumenten: unknown }[];
+    onderdelen: DagWorkshop[];
+  }
+) {
+  const project = await db.project.create({
+    data: {
+      ordernummer: opties.ordernummer,
+      clientId: opties.klant.id,
+      locationId: opties.klant.locations[0].id,
+      naam: opties.naam,
+      status: "BEVESTIGD",
+      startDatum: opties.datum,
+      eindDatum: opties.datum,
+      aantalPersonenTekst: opties.aantalPersonenTekst,
+      omzet: opties.omzet,
+      materiaalkosten: 240,
+    },
+  });
+
+  for (const onderdeel of opties.onderdelen) {
+    const w = opties.workshops[onderdeel.index];
+    const starts = onderdeel.rondes.map((r) => r.start).sort();
+    const einden = onderdeel.rondes.map((r) => r.eind).sort();
+    const maxGroepen = onderdeel.rondes.reduce((n, r) => Math.max(n, r.groepen), 1);
+
+    await db.workshopSession.create({
+      data: {
+        projectId: project.id,
+        workshopId: w.id,
+        locationId: opties.klant.locations[0].id,
+        contactId: opties.klant.contacts[0].id,
+        datum: opties.datum,
+        startTijd: starts[0],
+        eindTijd: einden[einden.length - 1],
+        aanwezigVanaf: onderdeel.aanwezigVanaf,
+        afbouwTot: onderdeel.afbouwTot,
+        deelnemers: 25 * maxGroepen,
+        doelgroep: "VO",
+        aantalRondes: onderdeel.rondes.length,
+        tijdPerRonde: w.standaardDuur,
+        vergoeding: w.standaardVergoeding as never,
+        status: "DOCENTEN_GEZOCHT",
+        publicatieDatum: dagen(-2),
+        rounds: {
+          create: onderdeel.rondes.map((r) => ({
+            nummer: r.nummer,
+            startTijd: r.start,
+            eindTijd: r.eind,
+            afdeling: r.afdeling ?? null,
+            aantalGroepen: r.groepen,
+            deelnemers: 25 * r.groepen,
+          })),
+        },
+        positions: {
+          create: {
+            rol: "WORKSHOPDOCENT",
+            aantal: maxGroepen,
+            vergoeding: w.standaardVergoeding as never,
+            vereisteDocumenten: w.vereisteDocumenten as never,
+            gepubliceerd: true,
+          },
+        },
+      },
+    });
+  }
+  return project;
 }
 
 /* ======================= Stap 6: inschrijving ======================= */
@@ -588,7 +769,7 @@ export async function stapInschrijving(db: PrismaClient) {
   const cultuurKlant = klanten[3]; // Newmancollege
   const cultuurProject = await db.project.create({
     data: {
-      ordernummer: `SW${jaar}-${String(AANTAL_OPDRACHTEN + 1).padStart(4, "0")}`,
+      ordernummer: `SW${jaar}-${String(AANTAL_OPDRACHTEN + 3).padStart(4, "0")}`,
       clientId: cultuurKlant.id,
       locationId: cultuurKlant.locations[0].id,
       naam: `Cultuurdag ${jaar} bij ${cultuurKlant.naam}`,

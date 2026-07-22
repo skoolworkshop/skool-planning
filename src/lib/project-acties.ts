@@ -7,7 +7,15 @@ import { PLANNEN } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
 import { z } from "zod";
 
-const RondeSchema = z.object({ nummer: z.number(), startTijd: z.string(), eindTijd: z.string(), groep: z.string().optional(), deelnemers: z.number().default(0) });
+const RondeSchema = z.object({
+  nummer: z.number(),
+  startTijd: z.string(),
+  eindTijd: z.string(),
+  groep: z.string().optional(),
+  afdeling: z.string().optional(),
+  aantalGroepen: z.number().int().min(1).max(20).default(1),
+  deelnemers: z.number().default(0),
+});
 
 const SessieSchema = z.object({
   workshopId: z.string().uuid(),
@@ -15,6 +23,8 @@ const SessieSchema = z.object({
   startTijd: z.string().regex(/^\d{2}:\d{2}$/),
   eindTijd: z.string().regex(/^\d{2}:\d{2}$/),
   aanwezigVanaf: z.string().optional(),
+  afbouwTot: z.string().optional(),
+  groepenPerRonde: z.number().int().min(1).max(20).optional(),
   deelnemers: z.number().default(0),
   leeftijd: z.string().optional(),
   doelgroep: z.string().optional(),
@@ -92,6 +102,7 @@ export async function projectAanmaken(invoer: ProjectInvoer) {
           startTijd: s.startTijd,
           eindTijd: s.eindTijd,
           aanwezigVanaf: s.aanwezigVanaf || null,
+          afbouwTot: s.afbouwTot || null,
           deelnemers: s.deelnemers,
           leeftijd: s.leeftijd || null,
           doelgroep: s.doelgroep || null,
@@ -108,7 +119,16 @@ export async function projectAanmaken(invoer: ProjectInvoer) {
 
       for (const r of s.rondes) {
         await tx.workshopRound.create({
-          data: { sessionId: sessie.id, nummer: r.nummer, startTijd: r.startTijd, eindTijd: r.eindTijd, groep: r.groep || null, deelnemers: r.deelnemers },
+          data: {
+            sessionId: sessie.id,
+            nummer: r.nummer,
+            startTijd: r.startTijd,
+            eindTijd: r.eindTijd,
+            groep: r.groep || null,
+            afdeling: r.afdeling || null,
+            aantalGroepen: r.aantalGroepen,
+            deelnemers: r.deelnemers,
+          },
         });
       }
 
