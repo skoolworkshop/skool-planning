@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+html, body {
+  height: 100%;
+}
+
+body {
+  @apply bg-neutral-50 text-neutral-900 antialiased;
+}
+
+/* Focus altijd zichtbaar houden voor toetsenbordbediening */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  @apply outline-none ring-2 ring-skool-500 ring-offset-2 ring-offset-white;
+}
+
+@layer components {
+  .kaart {
+    @apply rounded-xl border border-neutral-200 bg-white shadow-card;
+  }
+  .veld {
+    @apply w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm
+           placeholder:text-neutral-400 focus:border-skool-500;
+  }
+  .label {
+    @apply mb-1 block text-sm font-medium text-neutral-700;
+  }
+  .knop {
+    @apply inline-flex min-h-[44px] items-center justify-center gap-2 rounded-lg px-4 text-sm
+           font-semibold transition disabled:cursor-not-allowed disabled:opacity-50;
+  }
+  .knop-primair {
+    @apply knop bg-skool-500 text-white hover:bg-skool-600;
+  }
+  .knop-secundair {
+    @apply knop border border-neutral-300 bg-white text-neutral-800 hover:bg-neutral-50;
+  }
+  .knop-gevaar {
+    @apply knop border border-red-300 bg-white text-red-700 hover:bg-red-50;
+  }
+  .knop-ghost {
+    @apply knop text-neutral-700 hover:bg-neutral-100;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold;
+  }
+  .tabel {
+    @apply w-full border-collapse text-sm;
+  }
+  .tabel th {
+    @apply border-b border-neutral-200 px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-neutral-500;
+  }
+  .tabel td {
+    @apply border-b border-neutral-100 px-3 py-3 align-middle;
+  }
+}
+
+/* Ruimte onder sticky mobiele balken */
+.veilig-onder {
+  padding-bottom: calc(88px + env(safe-area-inset-bottom));
+}
