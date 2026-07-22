@@ -9,6 +9,7 @@
 import type { PrismaClient, DocType } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { maakCodes } from "./inschrijving";
+import { CATALOGUS, CATEGORIE_KLEUR, MAX_DEELNEMERS } from "./workshops-catalogus";
 
 const WACHTWOORD = process.env.SEED_WACHTWOORD ?? "SkoolDemo2026!";
 
@@ -32,70 +33,43 @@ const MEDEWERKERS = [
   { email: "lezer@example.com", role: "LEZER" as const },
 ];
 
-const CATEGORIEEN = [
-  { naam: "Muziek", kleur: "#f47c20", volgorde: 1 },
-  { naam: "Dans", kleur: "#7c3aed", volgorde: 2 },
-  { naam: "Media en techniek", kleur: "#0ea5e9", volgorde: 3 },
-  { naam: "Kunst en creatief", kleur: "#10b981", volgorde: 4 },
-  { naam: "Sport en spel", kleur: "#ef4444", volgorde: 5 },
-];
+const CATEGORIEEN = (Object.keys(CATEGORIE_KLEUR) as (keyof typeof CATEGORIE_KLEUR)[]).map((naam, i) => ({
+  naam,
+  kleur: CATEGORIE_KLEUR[naam],
+  volgorde: i + 1,
+}));
 
-const BENODIGDHEDEN: Record<string, string> = {
-  "Djembé en Percussie":
-    "De opdrachtgever regelt een geschikte ruimte op de begane grond, waar de tafels aan de kant kunnen worden geschoven. Zet stoelen zonder armleuningen klaar in rijen van ongeveer vijf naast elkaar. Let op: het kan er lekker luid aan toe gaan, dat hoort bij de energie van de workshop.",
-  "Graffiti en Streetart":
-    "De opdrachtgever zorgt voor een ruimte waar gespoten mag worden, het liefst buiten of in een goed geventileerde ruimte. Wij nemen zeilen mee om de vloer af te dekken.",
-  Streetdance:
-    "De opdrachtgever zorgt voor een ruime, open ruimte met een gladde vloer. Tafels en stoelen graag vooraf aan de kant, zodat er volop plek is om te bewegen.",
-  Breakdance:
-    "De opdrachtgever zorgt voor een gymzaal of aula met een vlakke vloer. Deelnemers dragen makkelijk zittende kleding en schone binnenschoenen.",
-  Bubbelvoetbal:
-    "De opdrachtgever zorgt voor een gymzaal, sportveld of andere ruime locatie met minimaal drie meter hoogte. Deelnemers dragen sportkleding en schoenen waarin ze vrij kunnen bewegen.",
-  "DJ Workshop":
-    "De opdrachtgever zorgt voor een ruimte met stroom en voldoende stopcontacten. Tafels aan de zijkant, zodat de DJ-set centraal kan staan.",
-  "Rap en Songwriting":
-    "De opdrachtgever zorgt voor een rustige ruimte met stroom, waar de groep in een kring kan zitten. Een tweede kleine ruimte om op te nemen is fijn maar niet verplicht.",
-  "Virtual Reality Beleving":
-    "De opdrachtgever zorgt voor een ruimte waarin deelnemers veilig een paar stappen kunnen zetten, met stroom in de buurt. Losse obstakels graag vooraf aan de kant.",
-};
-
-const VOORBEELD_LINKS: Record<string, string> = {
-  "Djembé en Percussie": "https://www.skoolworkshop.nl/opstelling-percussie",
-  Streetdance: "https://www.skoolworkshop.nl/opstelling-dans",
-};
-
-const WORKSHOPS_DATA: {
-  naam: string; cat: string; duur: number; vergoeding: number; docs: DocType[];
-  doelgroepen: string[]; materialen: string; maxGroep: number;
-}[] = [
-  { naam: "DJ Workshop", cat: "Muziek", duur: 90, vergoeding: 145, docs: ["VOG"], doelgroepen: ["Bovenbouw PO", "VO"], materialen: "DJ set, speakers", maxGroep: 30 },
-  { naam: "Rap en Songwriting", cat: "Muziek", duur: 90, vergoeding: 140, docs: ["VOG"], doelgroepen: ["VO", "MBO"], materialen: "Microfoons, laptop", maxGroep: 25 },
-  { naam: "Djembé en Percussie", cat: "Muziek", duur: 60, vergoeding: 130, docs: ["VOG"], doelgroepen: ["Onderbouw PO", "Bovenbouw PO"], materialen: "Djembés", maxGroep: 30 },
-  { naam: "Streetdance", cat: "Dans", duur: 60, vergoeding: 125, docs: ["VOG"], doelgroepen: ["Bovenbouw PO", "VO"], materialen: "Speaker", maxGroep: 30 },
-  { naam: "Breakdance", cat: "Dans", duur: 60, vergoeding: 135, docs: ["VOG"], doelgroepen: ["Bovenbouw PO", "VO"], materialen: "Dansvloer, speaker", maxGroep: 24 },
-  { naam: "TikTok Dance", cat: "Dans", duur: 60, vergoeding: 120, docs: ["VOG"], doelgroepen: ["VO"], materialen: "Speaker, telefoonstatief", maxGroep: 30 },
-  { naam: "Vlog en Videoproductie", cat: "Media en techniek", duur: 120, vergoeding: 165, docs: ["VOG"], doelgroepen: ["VO", "MBO"], materialen: "Camera's, statieven", maxGroep: 20 },
-  { naam: "Podcast maken", cat: "Media en techniek", duur: 120, vergoeding: 160, docs: ["VOG"], doelgroepen: ["VO", "MBO", "HBO"], materialen: "Opnameset", maxGroep: 16 },
-  { naam: "Virtual Reality Beleving", cat: "Media en techniek", duur: 90, vergoeding: 175, docs: ["VOG"], doelgroepen: ["Bovenbouw PO", "VO"], materialen: "VR brillen", maxGroep: 20 },
-  { naam: "Robotica en Programmeren", cat: "Media en techniek", duur: 90, vergoeding: 170, docs: ["VOG", "CERTIFICAAT"], doelgroepen: ["Bovenbouw PO", "VO"], materialen: "Robots, tablets", maxGroep: 24 },
-  { naam: "Graffiti en Streetart", cat: "Kunst en creatief", duur: 120, vergoeding: 155, docs: ["VOG"], doelgroepen: ["Bovenbouw PO", "VO"], materialen: "Spuitbussen, doeken", maxGroep: 20 },
-  { naam: "Sieraden maken", cat: "Kunst en creatief", duur: 60, vergoeding: 110, docs: ["VOG"], doelgroepen: ["Onderbouw PO", "BSO"], materialen: "Kralen, koord", maxGroep: 25 },
-  { naam: "Kookworkshop Wereldkeuken", cat: "Kunst en creatief", duur: 150, vergoeding: 180, docs: ["VOG", "CERTIFICAAT"], doelgroepen: ["VO", "Volwassenen"], materialen: "Ingrediënten, kookspullen", maxGroep: 16 },
-  { naam: "Bubbelvoetbal", cat: "Sport en spel", duur: 90, vergoeding: 150, docs: ["VOG"], doelgroepen: ["VO", "MBO", "Volwassenen"], materialen: "Bubbelballen, pomp", maxGroep: 20 },
-  { naam: "Levend Stratego", cat: "Sport en spel", duur: 120, vergoeding: 140, docs: ["VOG"], doelgroepen: ["Bovenbouw PO", "VO"], materialen: "Spelmateriaal, hesjes", maxGroep: 40 },
-];
+const WORKSHOPS_DATA = CATALOGUS.map((w) => ({
+  naam: w.naam,
+  cat: w.categorie,
+  duur: w.duur,
+  vergoeding: Math.round(w.prijs * 0.62 * 100) / 100, // richtbedrag voor de docent
+  docs: (w.categorie === "Media" || w.naam.includes("Zelfverdediging") || w.naam.includes("Kickboksen")
+    ? ["VOG", "CERTIFICAAT"]
+    : ["VOG"]) as DocType[],
+  doelgroepen:
+    w.minLeeftijd <= 6 ? ["Onderbouw PO", "Bovenbouw PO", "BSO"] :
+    w.minLeeftijd <= 10 ? ["Bovenbouw PO", "VO"] :
+    ["VO", "MBO", "Volwassenen"],
+  materialen: w.materialen,
+  maxGroep: MAX_DEELNEMERS,
+  minLeeftijd: w.minLeeftijd,
+  ruimte: w.ruimte,
+  siteSlug: w.siteSlug,
+  klantBenodigdheden: w.klantBenodigdheden ?? null,
+}));
 
 const DOCENTEN_DATA = [
-  { v: "Milan", a: "de Wit", plaats: "Breda", pc: "4811 AA", lat: 51.5866, lng: 4.7758, ws: [0, 1, 3] },
-  { v: "Sanne", a: "Vermeulen", plaats: "Tilburg", pc: "5011 BB", lat: 51.5606, lng: 5.0919, ws: [3, 4, 5] },
-  { v: "Youssef", a: "El Amrani", plaats: "Rotterdam", pc: "3011 CC", lat: 51.9244, lng: 4.4777, ws: [0, 1, 10] },
-  { v: "Fleur", a: "Jansen", plaats: "Eindhoven", pc: "5611 DD", lat: 51.4416, lng: 5.4697, ws: [6, 7, 8] },
-  { v: "Daan", a: "Kuipers", plaats: "Den Bosch", pc: "5211 EE", lat: 51.6978, lng: 5.3037, ws: [9, 8, 6] },
-  { v: "Noor", a: "Bakker", plaats: "Breda", pc: "4813 FF", lat: 51.5719, lng: 4.7683, ws: [11, 10, 12] },
-  { v: "Ravi", a: "Doekhie", plaats: "Utrecht", pc: "3511 GG", lat: 52.0907, lng: 5.1214, ws: [13, 14, 4] },
-  { v: "Lotte", a: "van Dijk", plaats: "Amsterdam", pc: "1011 HH", lat: 52.3676, lng: 4.9041, ws: [2, 11, 5] },
-  { v: "Sem", a: "Hoogland", plaats: "Roosendaal", pc: "4701 JJ", lat: 51.5308, lng: 4.4653, ws: [13, 14] },
-  { v: "Amira", a: "Yildiz", plaats: "Tilburg", pc: "5038 KK", lat: 51.5555, lng: 5.0913, ws: [12, 11, 1] },
+  { v: "Milan", a: "de Wit", plaats: "Breda", pc: "4811 AA", lat: 51.5866, lng: 4.7758, ws: [0, 1, 19] },
+  { v: "Sanne", a: "Vermeulen", plaats: "Tilburg", pc: "5011 BB", lat: 51.5606, lng: 5.0919, ws: [5, 6, 7] },
+  { v: "Youssef", a: "El Amrani", plaats: "Rotterdam", pc: "3011 CC", lat: 51.9244, lng: 4.4777, ws: [18, 19, 16] },
+  { v: "Fleur", a: "Jansen", plaats: "Eindhoven", pc: "5611 DD", lat: 51.4416, lng: 5.4697, ws: [11, 12, 15] },
+  { v: "Daan", a: "Kuipers", plaats: "Den Bosch", pc: "5211 EE", lat: 51.6978, lng: 5.3037, ws: [13, 14, 11] },
+  { v: "Noor", a: "Bakker", plaats: "Breda", pc: "4813 FF", lat: 51.5719, lng: 4.7683, ws: [0, 2, 3] },
+  { v: "Ravi", a: "Doekhie", plaats: "Utrecht", pc: "3511 GG", lat: 52.0907, lng: 5.1214, ws: [16, 17, 20] },
+  { v: "Lotte", a: "van Dijk", plaats: "Amsterdam", pc: "1011 HH", lat: 52.3676, lng: 4.9041, ws: [27, 28, 29] },
+  { v: "Sem", a: "Hoogland", plaats: "Roosendaal", pc: "4701 JJ", lat: 51.5308, lng: 4.4653, ws: [22, 23, 24] },
+  { v: "Amira", a: "Yildiz", plaats: "Tilburg", pc: "5038 KK", lat: 51.5555, lng: 5.0913, ws: [8, 9, 10] },
 ];
 
 const ONDERWIJS_TYPES = ["BASISSCHOOL", "VOORTGEZET_ONDERWIJS", "MBO", "HBO", "UNIVERSITEIT"];
@@ -202,8 +176,10 @@ export async function stapBasis(db: PrismaClient) {
       voorbereidingstijd: 30,
       materialen: w.materialen,
       materialenDoor: "Skool Workshop",
-      klantBenodigdheden: BENODIGDHEDEN[w.naam] ?? null,
-      voorbeeldLink: VOORBEELD_LINKS[w.naam] ?? null,
+      klantBenodigdheden: w.klantBenodigdheden,
+      siteSlug: w.siteSlug,
+      locatieEisen: w.ruimte,
+      minLeeftijd: w.minLeeftijd,
       doelgroepen: w.doelgroepen,
       vereisteDocumenten: w.docs,
       docentInstructie: "Wees een half uur voor aanvang aanwezig en meld je bij de contactpersoon.",
@@ -263,13 +239,13 @@ export async function stapDocenten(db: PrismaClient) {
         plaats: d.plaats,
         lat: d.lat,
         lng: d.lng,
-        samenwerking: (i % 3 === 0 ? "LOONDIENST" : "ZZP") as never,
-        kvk: i % 3 === 0 ? null : `${60000000 + i}`,
+        samenwerking: (i % 3 === 0 ? "ZZP" : "ZZP") as never,
+        kvk: `${60000000 + i}`,
         iban: `NL91ABNA04170${String(10000 + i).slice(-5)}`,
         rekeninghouder: `${d.v} ${d.a}`,
-        uurtarief: 32 + (i % 4) * 2,
-        minDagtarief: 95,
-        kmVergoeding: 0.23,
+        uurtarief: 45,
+        minDagtarief: 100,
+        kmVergoeding: 0.25,
         maxReisAfstand: 60 + (i % 3) * 25,
         eigenVervoer: i % 4 !== 0,
         rijbewijs: i % 4 !== 0,
@@ -319,7 +295,7 @@ export async function stapDocenten(db: PrismaClient) {
     if (i % 3 !== 0) {
       documenten.push({ teacherId: t.id, type: "KVK", bestandsnaam: "kvk.pdf", uploadedAt: dagen(-180), status: "GOEDGEKEURD" });
     }
-    if (d.ws.includes(9) || d.ws.includes(12)) {
+    if (d.ws.includes(22) || d.ws.includes(26) || d.ws.some((x) => x >= 11 && x <= 15)) {
       documenten.push({ teacherId: t.id, type: "CERTIFICAAT", bestandsnaam: "certificaat.pdf", uploadedAt: dagen(-100), status: "GOEDGEKEURD" });
     }
 
@@ -570,7 +546,7 @@ export async function stapOpdrachten(db: PrismaClient) {
       const start = ["09:00", "10:00", "13:00", "13:30"][i % 4];
       const eind = ["12:00", "13:00", "16:00", "16:30"][i % 4];
       const km = 24 + i * 3;
-      const kmVerg = Math.round(km * 0.23 * 100) / 100;
+      const kmVerg = Math.round(km * 0.25 * 2 * 100) / 100;
       const basis = Number(workshop.standaardVergoeding);
       const parkeer = i % 2 === 0 ? 4.5 : 0;
       return {
@@ -613,24 +589,24 @@ export async function stapOpdrachten(db: PrismaClient) {
     omzet: 4680,
     workshops,
     onderdelen: [
-      { index: 2, aanwezigVanaf: "09:30", afbouwTot: "14:45", rondes: [
+      { index: 17, aanwezigVanaf: "09:30", afbouwTot: "14:45", rondes: [
         { nummer: 1, start: "10:00", eind: "11:00", groepen: 1 },
         { nummer: 2, start: "11:00", eind: "12:00", groepen: 1 },
         { nummer: 3, start: "12:30", eind: "13:30", groepen: 1 },
       ] },
-      { index: 10, aanwezigVanaf: "09:30", afbouwTot: "14:45", rondes: [
+      { index: 16, aanwezigVanaf: "09:30", afbouwTot: "14:45", rondes: [
         { nummer: 1, start: "10:00", eind: "11:00", groepen: 1 },
         { nummer: 2, start: "11:00", eind: "12:00", groepen: 1 },
         { nummer: 3, start: "12:30", eind: "13:30", groepen: 1 },
         { nummer: 4, start: "13:30", eind: "14:30", groepen: 2 },
       ] },
-      { index: 3, aanwezigVanaf: "09:30", afbouwTot: "14:45", rondes: [
+      { index: 1, aanwezigVanaf: "09:30", afbouwTot: "14:45", rondes: [
         { nummer: 1, start: "10:00", eind: "11:00", groepen: 1 },
         { nummer: 2, start: "11:00", eind: "12:00", groepen: 1 },
         { nummer: 3, start: "12:30", eind: "13:30", groepen: 1 },
         { nummer: 4, start: "13:30", eind: "14:30", groepen: 1 },
       ] },
-      { index: 13, aanwezigVanaf: "09:30", afbouwTot: "14:45", rondes: [
+      { index: 22, aanwezigVanaf: "09:30", afbouwTot: "14:45", rondes: [
         { nummer: 1, start: "10:00", eind: "11:00", groepen: 1 },
         { nummer: 2, start: "11:00", eind: "12:00", groepen: 2 },
         { nummer: 3, start: "12:30", eind: "13:30", groepen: 1 },
@@ -649,19 +625,19 @@ export async function stapOpdrachten(db: PrismaClient) {
     omzet: 5240,
     workshops,
     onderdelen: [
-      { index: 4, aanwezigVanaf: "09:30", afbouwTot: "12:15", rondes: [
+      { index: 27, aanwezigVanaf: "09:30", afbouwTot: "12:15", rondes: [
         { nummer: 1, start: "10:00", eind: "11:00", afdeling: "4VWO", groepen: 4 },
         { nummer: 2, start: "11:00", eind: "12:00", afdeling: "4HAVO", groepen: 4 },
       ] },
-      { index: 1, aanwezigVanaf: "10:45", afbouwTot: "13:30", rondes: [
+      { index: 18, aanwezigVanaf: "10:45", afbouwTot: "13:30", rondes: [
         { nummer: 1, start: "11:15", eind: "12:15", afdeling: "4VWO", groepen: 2 },
         { nummer: 2, start: "12:15", eind: "13:15", afdeling: "4HAVO", groepen: 2 },
       ] },
-      { index: 10, aanwezigVanaf: "10:45", afbouwTot: "13:30", rondes: [
+      { index: 0, aanwezigVanaf: "10:45", afbouwTot: "13:30", rondes: [
         { nummer: 1, start: "11:15", eind: "12:15", afdeling: "4VWO", groepen: 1 },
         { nummer: 2, start: "12:15", eind: "13:15", afdeling: "4HAVO", groepen: 1 },
       ] },
-      { index: 2, aanwezigVanaf: "10:45", afbouwTot: "13:30", rondes: [
+      { index: 16, aanwezigVanaf: "10:45", afbouwTot: "13:30", rondes: [
         { nummer: 1, start: "11:15", eind: "12:15", afdeling: "4VWO", groepen: 1 },
         { nummer: 2, start: "12:15", eind: "13:15", afdeling: "4HAVO", groepen: 1 },
       ] },
@@ -801,7 +777,7 @@ export async function stapInschrijving(db: PrismaClient) {
     { nummer: 3, naam: "Afsluitronde", start: "12:45", eind: "14:00" },
   ];
   const ruimtes = ["Gymzaal", "Aula", "Lokaal 1.12", "Lokaal 1.14", "Techniekplein", "Buiten"];
-  const gekozenWorkshops = [0, 3, 4, 6, 10, 13];
+  const gekozenWorkshops = [0, 6, 16, 18, 22, 27];
 
   await db.enrollmentRound.createMany({
     data: rondeTijden.map((rt) => ({

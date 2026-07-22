@@ -213,3 +213,55 @@ export async function workshopTekstOpslaan(workshopId: string, formData: FormDat
   revalidatePath("/beheer/workshops");
   return { ok: true };
 }
+
+/**
+ * Haalt van elke workshop de foto op van skoolworkshop.nl.
+ * Leest de og:image uit de pagina die bij de siteSlug hoort.
+ * Draai dit opnieuw zodra je op de site andere foto's plaatst.
+ */
+export async function afbeeldingenOphalen() {
+  await vereisRol(...BEHEER);
+  const workshops = await db.workshop.findMany({ where: { siteSlug: { not: null } }, select: { id: true, naam: true, siteSlug: true } });
+
+  let gelukt = 0;
+  const mislukt: string[] = [];
+
+  await Promise.all(
+    workshops.map(async (w) => {
+      const url = `https://skoolworkshop.nl/workshops/${w.siteSlug}/`;
+      try {
+        const res = await fetch(url, {
+          headers: { "user-agent": "SkoolWorkshopPlanning/1.0" },
+          next: { revalidate: 0 },
+        });
+        if (!res.ok) {
+          mislukt.push(w.naam);
+          return;
+        }
+        const html = await res.text();
+        const m =
+          /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i.exec(html) ??
+          /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i.exec(html);
+        if (!m) {
+          mislukt.push(w.naam);
+          return;
+        }
+        await db.workshop.update({ where: { id: w.id }, data: { afbeeldingUrl: m[1] } });
+        gelukt++;
+      } catch {
+        mislukt.push(w.naam);
+      }
+    })
+  );
+
+  revalidatePath("/beheer/workshops");
+  return { ok: true, gelukt, mislukt };
+}
+
+/** Handmatig een afbeelding instellen, bijvoorbeeld als de site tijdelijk plat ligt. */
+export async function afbeeldingInstellen(workshopId: string, url: string) {
+  await vereisRol(...BEHEER);
+  await db.workshop.update({ where: { id: workshopId }, data: { afbeeldingUrl: url.trim() || null } });
+  revalidatePath("/beheer/workshops");
+  return { ok: true };
+}

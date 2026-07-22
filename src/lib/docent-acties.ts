@@ -4,9 +4,11 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { vereisGebruiker, ipAdres } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
+import { berekenVergoeding } from "@/lib/tarieven";
+import { haalTarieven } from "@/lib/tarief-acties";
 import { meld } from "@/lib/notify";
 import { herberekenStatus } from "@/lib/planning-acties";
-import { datum as fmtDatum, urenTussen, afstandKm } from "@/lib/format";
+import { datum as fmtDatum, urenTussen, afstandKm, reistijdMin } from "@/lib/format";
 
 async function mijnProfiel() {
   const u = await vereisGebruiker();
@@ -172,13 +174,23 @@ export async function werkregistratieIndienen(assignmentId: string, formData: Fo
   if (uren <= 0) return { fout: "De eindtijd moet na de starttijd liggen." };
   if (kilometers < 0 || kilometers > 1000) return { fout: "Vul een realistisch aantal kilometers in." };
 
-  const kmTarief = Number(teacher.kmVergoeding ?? 0.23);
-  const workshopVergoeding = Number(a.position.vergoeding);
-  const kmVergoeding = Math.round(kilometers * kmTarief * 100) / 100;
-  const minimum = Number(teacher.minDagtarief ?? 0);
-  const uurBedrag = Number(teacher.uurtarief ?? 0) * uren;
-  const basis = Math.max(workshopVergoeding, uurBedrag, minimum);
-  const totaal = Math.round((basis + kmVergoeding + ovKosten + parkeerkosten + overigeKosten) * 100) / 100;
+  // Tarieven uit de instellingen, met het eigen tarief van de workshopdocent als dat afwijkt
+  const basisTarieven = await haalTarieven();
+  const tarieven = {
+    ...basisTarieven,
+    uurtarief: Number(teacher.uurtarief ?? 0) > 0 ? Number(teacher.uurtarief) : basisTarieven.uurtarief,
+    minimumPerDag: Number(teacher.minDagtarief ?? 0) > 0 ? Number(teacher.minDagtarief) : basisTarieven.minimumPerDag,
+    kmTarief: Number(teacher.kmVergoeding ?? 0) > 0 ? Number(teacher.kmVergoeding) : basisTarieven.kmTarief,
+  };
+
+  const reistijd = reistijdMin(kilometers);
+  const v = berekenVergoeding(
+    { uren, kilometers, reistijdMinuten: reistijd, parkeerkosten: parkeerkosten + ovKosten + overigeKosten },
+    tarieven
+  );
+  const basis = v.uurVergoeding;
+  const kmVergoeding = Math.round((v.reiskosten + v.reistijdVergoeding) * 100) / 100;
+  const totaal = v.totaal;
 
   const data = {
     teacherId: teacher.id,
