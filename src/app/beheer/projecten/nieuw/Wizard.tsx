@@ -7,12 +7,12 @@ import { projectAanmaken } from "@/lib/project-acties";
 type Klant = { id: string; naam: string; locaties: { id: string; naam: string }[]; contacten: { id: string; naam: string }[] };
 type Workshop = { id: string; naam: string; categorie: string; duur: number; vergoeding: number; docenten: number };
 
-type Ronde = { nummer: number; startTijd: string; eindTijd: string; groep: string; deelnemers: number };
+type Ronde = { nummer: number; startTijd: string; eindTijd: string; groep: string; deelnemers: number; aantalGroepen: number; afdeling?: string };
 type Sessie = {
   workshopId: string; datum: string; startTijd: string; eindTijd: string; aanwezigVanaf: string;
   deelnemers: number; leeftijd: string; doelgroep: string; ruimte: string; vergoeding: number;
   aantalDocenten: number; aantalAssistenten: number; benodigdheden: string; kleding: string;
-  bijzonderheden: string; aanmeldDeadline: string; rondes: Ronde[];
+  bijzonderheden: string; aanmeldDeadline: string; afbouwTot: string; groepenPerRonde: number; rondes: Ronde[];
 };
 
 function legeSessie(): Sessie {
@@ -20,7 +20,7 @@ function legeSessie(): Sessie {
     workshopId: "", datum: "", startTijd: "09:00", eindTijd: "12:30", aanwezigVanaf: "08:30",
     deelnemers: 0, leeftijd: "", doelgroep: "", ruimte: "", vergoeding: 0,
     aantalDocenten: 1, aantalAssistenten: 0, benodigdheden: "", kleding: "", bijzonderheden: "",
-    aanmeldDeadline: "", rondes: [],
+    aanmeldDeadline: "", afbouwTot: "", groepenPerRonde: 1, rondes: [],
   };
 }
 
@@ -65,11 +65,16 @@ export default function Wizard({ klanten, workshops }: { klanten: Klant[]; works
         eindTijd: `${String(Math.floor(eind / 60)).padStart(2, "0")}:${String(eind % 60).padStart(2, "0")}`,
         groep: `Groep ${n}`,
         deelnemers: 0,
+        aantalGroepen: Math.max(1, s.groepenPerRonde),
       });
       t = eind + pauze;
     }
     const laatste = rondes[rondes.length - 1];
-    wijzig(i, { rondes, eindTijd: laatste ? laatste.eindTijd : s.eindTijd });
+    wijzig(i, {
+      rondes,
+      eindTijd: laatste ? laatste.eindTijd : s.eindTijd,
+      aantalDocenten: Math.max(s.aantalDocenten, Math.max(1, s.groepenPerRonde)),
+    });
   }
 
   function opslaan() {
@@ -204,6 +209,15 @@ export default function Wizard({ klanten, workshops }: { klanten: Klant[]; works
                   <label className="label">Ruimte</label>
                   <input value={s.ruimte} onChange={(e) => wijzig(i, { ruimte: e.target.value })} className="veld" placeholder="Gymzaal" />
                 </div>
+                <div>
+                  <label className="label">Groepen tegelijk per ronde</label>
+                  <input type="number" min={1} max={20} value={s.groepenPerRonde}
+                    onChange={(e) => wijzig(i, { groepenPerRonde: Math.max(1, Number(e.target.value)) })} className="veld" />
+                </div>
+                <div>
+                  <label className="label">Vertrek na afbouw</label>
+                  <input type="time" value={s.afbouwTot} onChange={(e) => wijzig(i, { afbouwTot: e.target.value })} className="veld" />
+                </div>
                 <div className="sm:col-span-3">
                   <label className="label">Rondes</label>
                   <div className="flex flex-wrap items-center gap-2">
@@ -219,6 +233,9 @@ export default function Wizard({ klanten, workshops }: { klanten: Klant[]; works
                       </span>
                     )}
                   </div>
+                  <p className="mt-1 text-xs text-neutral-500">
+                    Zet de knop opnieuw als je het aantal groepen aanpast. Per ronde fijnslijpen doe je straks op de opdracht zelf.
+                  </p>
                 </div>
                 <div className="sm:col-span-3">
                   <label className="label">Benodigdheden en bijzonderheden</label>

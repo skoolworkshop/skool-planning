@@ -2,8 +2,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { vereisGebruiker } from "@/lib/auth";
-import { Kaart, PaginaKop, Badge, statusKleur, Rij } from "@/components/ui";
+import { Kaart, PaginaKop, Badge, statusKleur } from "@/components/ui";
 import { datum, euro, label } from "@/lib/format";
+import Klantgegevens from "./Klantgegevens";
+
+const ONDERWIJS = ["BASISSCHOOL", "VOORTGEZET_ONDERWIJS", "MBO", "HBO", "UNIVERSITEIT"];
 
 export const dynamic = "force-dynamic";
 
@@ -58,12 +61,16 @@ export default async function KlantDetail({ params }: { params: { id: string } }
         </Kaart>
 
         <Kaart>
-          <h2 className="mb-2 font-semibold">Klantgegevens</h2>
-          <Rij label="Doelgroep">{k.doelgroep}</Rij>
-          <Rij label="Factuuradres">{k.factuurAdres}</Rij>
-          <Rij label="Factuur e-mail">{k.factuurEmail}</Rij>
-          <Rij label="Betaaltermijn">{k.betaaltermijn} dagen</Rij>
-          <Rij label="Tags">{k.tags.join(", ")}</Rij>
+          <Klantgegevens
+            clientId={k.id}
+            onderwijs={ONDERWIJS.includes(k.type)}
+            doelgroep={k.doelgroep ?? ""}
+            cjpNummer={k.cjpNummer ?? ""}
+            factuurAdres={k.factuurAdres ?? ""}
+            factuurEmail={k.factuurEmail ?? ""}
+            betaaltermijn={k.betaaltermijn}
+            tags={k.tags}
+          />
         </Kaart>
 
         <Kaart className="lg:col-span-3">

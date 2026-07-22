@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { vereisGebruiker } from "@/lib/auth";
 import { PaginaKop, Kaart, Badge } from "@/components/ui";
 import { euro, label } from "@/lib/format";
+import Benodigdheden from "./Benodigdheden";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export default async function WorkshopsPagina() {
 
   return (
     <>
-      <PaginaKop titel="Workshops" sub="De centrale catalogus die docenten aan hun profiel koppelen" />
+      <PaginaKop titel="Workshops" sub="De centrale catalogus. De benodigdheden per workshop komen automatisch in de bevestigingsmail." />
       <div className="space-y-6">
         {categorieen.map((c) => (
           <section key={c.id}>
@@ -41,6 +42,12 @@ export default async function WorkshopsPagina() {
                   {w.vereisteDocumenten.length > 0 && (
                     <p className="mt-2 text-xs text-amber-700">Vereist: {w.vereisteDocumenten.map(label).join(", ")}</p>
                   )}
+                  <Benodigdheden
+                    workshopId={w.id}
+                    naam={w.naam}
+                    tekst={w.klantBenodigdheden ?? ""}
+                    link={w.voorbeeldLink ?? ""}
+                  />
                 </Kaart>
               ))}
             </div>

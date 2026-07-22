@@ -104,8 +104,8 @@ export function Stat({ titel, waarde, href, accent }: { titel: string; waarde: R
 export function Rij({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex gap-3 border-b border-neutral-100 py-2 text-sm last:border-0">
-      <div className="w-40 shrink-0 text-neutral-500">{label}</div>
-      <div className="min-w-0 flex-1 font-medium">{children || <span className="text-neutral-400">Niet ingevuld</span>}</div>
+      <div className="w-32 shrink-0 text-neutral-500 sm:w-40">{label}</div>
+      <div className="min-w-0 flex-1 break-words font-medium [overflow-wrap:anywhere]">{children || <span className="text-neutral-400">Niet ingevuld</span>}</div>
     </div>
   );
 }
