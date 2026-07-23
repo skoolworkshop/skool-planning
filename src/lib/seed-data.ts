@@ -259,16 +259,16 @@ export async function stapDocenten(db: PrismaClient) {
 
   const docenten = await leesDocenten(db);
 
-  const skills: { teacherId: string; workshopId: string; bevoegdheid: never }[] = [];
+  const skills: Prisma.TeacherWorkshopSkillCreateManyInput[] = [];
   const documenten: Prisma.TeacherDocumentCreateManyInput[] = [];
-  const beschikbaar: { teacherId: string; weekdag: number; beschikbaar: boolean }[] = [];
+  const beschikbaar: Prisma.AvailabilityCreateManyInput[] = [];
 
   for (let i = 0; i < DOCENTEN_DATA.length; i++) {
     const d = DOCENTEN_DATA[i];
     const t = docenten[i];
 
     for (const w of d.ws) {
-      skills.push({ teacherId: t.id, workshopId: workshops[w].id, bevoegdheid: (i === 9 && w === d.ws[2] ? "ASSISTEREN" : "ZELFSTANDIG") as never });
+      skills.push({ teacherId: t.id, workshopId: workshops[w].id, bevoegdheid: i === 9 && w === d.ws[2] ? "ASSISTEREN" : "ZELFSTANDIG" });
     }
 
     documenten.push({
@@ -367,7 +367,7 @@ export async function stapOpdrachten(db: PrismaClient) {
   const jaar = new Date().getFullYear();
 
   // Projecten in een keer wegschrijven
-  const projectRijen = [];
+  const projectRijen: Prisma.ProjectCreateManyInput[] = [];
   for (let i = 0; i < AANTAL_OPDRACHTEN; i++) {
     const klant = klanten[i % klanten.length];
     const workshop = workshops[i % workshops.length];
@@ -389,7 +389,7 @@ export async function stapOpdrachten(db: PrismaClient) {
   const projecten = (await db.project.findMany({ orderBy: { ordernummer: "asc" } })).slice(0, AANTAL_OPDRACHTEN);
 
   // Sessies in een keer wegschrijven
-  const sessieRijen = [];
+  const sessieRijen: Prisma.WorkshopSessionCreateManyInput[] = [];
   for (let i = 0; i < AANTAL_OPDRACHTEN; i++) {
     const klant = klanten[i % klanten.length];
     const workshop = workshops[i % workshops.length];
@@ -425,7 +425,7 @@ export async function stapOpdrachten(db: PrismaClient) {
   const sessies = projecten.map((p) => sessiePerProject.get(p.id)!);
 
   // Rondes
-  const rondeRijen = [];
+  const rondeRijen: Prisma.WorkshopRoundCreateManyInput[] = [];
   for (let i = 0; i < AANTAL_OPDRACHTEN; i++) {
     const aantalRondes = (i % 3) + 1;
     const start = ["09:00", "10:00", "13:00", "13:30"][i % 4];
@@ -444,7 +444,7 @@ export async function stapOpdrachten(db: PrismaClient) {
   await db.workshopRound.createMany({ data: rondeRijen });
 
   // Posities
-  const positieRijen = [];
+  const positieRijen: Prisma.StaffingPositionCreateManyInput[] = [];
   for (let i = 0; i < AANTAL_OPDRACHTEN; i++) {
     const workshop = workshops[i % workshops.length];
     positieRijen.push({
@@ -463,7 +463,7 @@ export async function stapOpdrachten(db: PrismaClient) {
   const posities = sessies.map((s) => positiePerSessie.get(s.id)!);
 
   // Bezetting varieren
-  const toewijzingen: { positionId: string; teacherId: string; bevestigd: boolean; bevestigdOp: Date | null }[] = [];
+  const toewijzingen: Prisma.AssignmentCreateManyInput[] = [];
   const aanmeldingen: Prisma.ApplicationCreateManyInput[] = [];
   const teSluiten: string[] = [];
   const sessieUpdates: { id: string; data: Prisma.WorkshopSessionUpdateInput }[] = [];
@@ -480,14 +480,14 @@ export async function stapOpdrachten(db: PrismaClient) {
 
     if (verleden) {
       const doc = kandidaten[0];
-      toewijzingen.push({ positionId: positie.id, teacherId: doc.id, bevestigd: true, bevestigdOp: dagen(dagenVooruit - 5) });
+      toewijzingen.push({ positionId: positie.id, teacherId: doc.id, toegewezenOp: dagen(dagenVooruit - 5) });
       aanmeldingen.push({ positionId: positie.id, teacherId: doc.id, soort: "AANMELDING", status: "TOEGEWEZEN", gereageerdOp: dagen(dagenVooruit - 7) });
       teSluiten.push(positie.id);
       sessieUpdates.push({ id: sessies[i].id, data: { status: "UITGEVOERD" } });
       werkRegels.push({ i, positionId: positie.id, teacherId: doc.id });
     } else if (i % 4 === 1) {
       for (let k = 0; k < aantalDocenten && k < kandidaten.length; k++) {
-        toewijzingen.push({ positionId: positie.id, teacherId: kandidaten[k].id, bevestigd: k === 0, bevestigdOp: null });
+        toewijzingen.push({ positionId: positie.id, teacherId: kandidaten[k].id, toegewezenOp: dagen(-3) });
         aanmeldingen.push({ positionId: positie.id, teacherId: kandidaten[k].id, soort: "AANMELDING", status: "TOEGEWEZEN", gereageerdOp: dagen(-3) });
       }
       teSluiten.push(positie.id);
@@ -538,7 +538,7 @@ export async function stapOpdrachten(db: PrismaClient) {
   if (werkRegels.length > 0) {
     const toew = await db.assignment.findMany({ where: { positionId: { in: werkRegels.map((w) => w.positionId) } } });
     const perSleutel = new Map(toew.map((t) => [`${t.positionId}|${t.teacherId}`, t.id]));
-    const regels = werkRegels.map((w) => {
+    const regels: Prisma.WorkRegistrationCreateManyInput[] = werkRegels.map((w) => {
       const i = w.i;
       const dagenVooruit = i < 3 ? -21 + i * 5 : (i - 2) * 6;
       const workshop = workshops[i % workshops.length];
@@ -789,7 +789,7 @@ export async function stapInschrijving(db: PrismaClient) {
   });
   const rondes = await db.enrollmentRound.findMany({ where: { enrollmentId: inschrijving.id }, orderBy: { nummer: "asc" } });
 
-  const slotRijen = [];
+  const slotRijen: Prisma.EnrollmentSlotCreateManyInput[] = [];
   for (const ronde of rondes) {
     for (let w = 0; w < gekozenWorkshops.length; w++) {
       slotRijen.push({
@@ -821,7 +821,7 @@ export async function stapInschrijving(db: PrismaClient) {
   // Ongeveer twee derde heeft al gekozen, de rest nog niet
   const rondeIds = rondes.map((r) => r.id);
   const bezetting = new Map<string, number>();
-  const keuzes: { participantId: string; slotId: string; roundId: string }[] = [];
+  const keuzes: Prisma.ChoiceCreateManyInput[] = [];
   const compleetIds: string[] = [];
 
   for (let i = 0; i < 40 && i < leerlingen.length; i++) {
