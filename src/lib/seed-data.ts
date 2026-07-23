@@ -43,7 +43,8 @@ const WORKSHOPS_DATA = CATALOGUS.map((w) => ({
   naam: w.naam,
   cat: w.categorie,
   duur: w.duur,
-  vergoeding: Math.round(w.prijs * 0.62 * 100) / 100, // richtbedrag voor de docent
+  verkoopprijs: w.prijs, // wat de klant betaalt
+  vergoeding: 45 * (w.duur / 60) < 100 ? 100 : Math.round(45 * (w.duur / 60) * 100) / 100,
   docs: (w.categorie === "Media" || w.naam.includes("Zelfverdediging") || w.naam.includes("Kickboksen")
     ? ["VOG", "CERTIFICAAT"]
     : ["VOG"]) as DocType[],
@@ -172,6 +173,7 @@ export async function stapBasis(db: PrismaClient) {
       omschrijving: `In deze workshop gaan deelnemers direct zelf aan de slag. De docent past het niveau aan op de groep en sluit af met een presentatie of gezamenlijk moment.`,
       standaardDuur: w.duur,
       maxGroep: w.maxGroep,
+      verkoopprijs: w.verkoopprijs,
       standaardVergoeding: w.vergoeding,
       minVergoeding: Math.round(w.vergoeding * 0.8),
       voorbereidingstijd: 30,

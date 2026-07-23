@@ -5,7 +5,9 @@ import { db } from "@/lib/db";
 import { vereisRol, ipAdres } from "@/lib/auth";
 import { BEHEER } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
-import { STANDAARD_TARIEVEN, type Tarieven } from "@/lib/tarieven";
+import { STANDAARD_TARIEVEN, STANDAARD_VERKOOP, type Tarieven, type Verkooptarieven } from "@/lib/tarieven";
+
+const VERKOOP_SLEUTELS = ["starttarief", "extraDeelnemer", "kmTariefKlant", "maxDeelnemers"] as const;
 
 const SLEUTELS: (keyof Tarieven)[] = [
   "uurtarief",
@@ -136,4 +138,59 @@ export async function docentTariefOpslaan(teacherId: string, formData: FormData)
 
   revalidatePath(`/beheer/docenten/${teacherId}`);
   return { ok: true, gewijzigd: regels.length };
+}
+
+
+/** Leest de verkooptarieven. Ontbreekt er iets, dan geldt de standaard. */
+// PUBLIEK: algemene tarieven, geen persoonsgegevens
+export async function haalVerkooptarieven(): Promise<Verkooptarieven> {
+  try {
+    const rijen = await db.instelling.findMany({ where: { sleutel: { in: VERKOOP_SLEUTELS.map((s) => `verkoop.${s}`) } } });
+    const uit = { ...STANDAARD_VERKOOP };
+    for (const r of rijen) {
+      const naam = r.sleutel.replace("verkoop.", "") as keyof Verkooptarieven;
+      const n = Number(r.waarde);
+      if (VERKOOP_SLEUTELS.includes(naam as never) && Number.isFinite(n)) uit[naam] = n;
+    }
+    return uit;
+  } catch {
+    return { ...STANDAARD_VERKOOP };
+  }
+}
+
+/** Slaat de verkooptarieven op. Alleen beheerders. */
+export async function verkooptarievenOpslaan(formData: FormData) {
+  const u = await vereisRol(...BEHEER);
+  const nieuw: Partial<Verkooptarieven> = {};
+  for (const sleutel of VERKOOP_SLEUTELS) {
+    const ruw = formData.get(sleutel);
+    if (ruw === null) continue;
+    const n = Number(String(ruw).replace(",", "."));
+    if (!Number.isFinite(n) || n < 0) return { fout: `Vul bij ${sleutel} een geldig getal in.` };
+    nieuw[sleutel] = n;
+  }
+
+  for (const [sleutel, waarde] of Object.entries(nieuw)) {
+    await db.instelling.upsert({
+      where: { sleutel: `verkoop.${sleutel}` },
+      create: { sleutel: `verkoop.${sleutel}`, waarde: String(waarde) },
+      update: { waarde: String(waarde) },
+    });
+  }
+
+  await logAudit({ userId: u.id, actie: "VERKOOPTARIEVEN_AANGEPAST", entiteit: "Instelling", nieuw, ip: ipAdres() });
+  revalidatePath("/beheer/instellingen");
+  return { ok: true };
+}
+
+/** Zet de verkoopprijs van één workshop. */
+export async function workshopPrijsOpslaan(workshopId: string, prijs: string) {
+  await vereisRol(...BEHEER);
+  const n = Number(String(prijs).replace(",", "."));
+  await db.workshop.update({
+    where: { id: workshopId },
+    data: { verkoopprijs: Number.isFinite(n) && n > 0 ? n : null },
+  });
+  revalidatePath("/beheer/workshops");
+  return { ok: true };
 }

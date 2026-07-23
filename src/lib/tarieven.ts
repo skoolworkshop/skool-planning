@@ -18,6 +18,40 @@ export type Tarieven = {
   reistijdDeel: number;
 };
 
+/** Wat de klant betaalt. Los van wat de workshopdocent krijgt. */
+export type Verkooptarieven = {
+  starttarief: number;
+  extraDeelnemer: number;
+  kmTariefKlant: number;
+  maxDeelnemers: number;
+};
+
+export const STANDAARD_VERKOOP: Verkooptarieven = {
+  starttarief: 45,
+  extraDeelnemer: 7.5,
+  kmTariefKlant: 0.38,
+  maxDeelnemers: 25,
+};
+
+/**
+ * Wat een opdracht de klant kost.
+ * Starttarief eenmalig, daarna per workshopronde de verkoopprijs naar rato van de duur.
+ */
+export function opdrachtPrijs(
+  regels: { verkoopprijs60: number; duurMinuten: number; rondes: number; deelnemers: number }[],
+  v: Verkooptarieven = STANDAARD_VERKOOP
+): { workshops: number; extra: number; start: number; totaal: number } {
+  let workshops = 0;
+  let extra = 0;
+  for (const r of regels) {
+    workshops += (r.verkoopprijs60 / 60) * r.duurMinuten * r.rondes;
+    extra += Math.max(0, r.deelnemers - v.maxDeelnemers) * v.extraDeelnemer;
+  }
+  const start = regels.length > 0 ? v.starttarief : 0;
+  const rond = (n: number) => Math.round(n * 100) / 100;
+  return { workshops: rond(workshops), extra: rond(extra), start, totaal: rond(workshops + extra + start) };
+}
+
 export const STANDAARD_TARIEVEN: Tarieven = {
   uurtarief: 45,
   minimumPerDag: 100,

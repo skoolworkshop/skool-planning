@@ -18,9 +18,9 @@ export type SyncResultaat = {
 };
 
 /** Haalt de uitgelichte afbeelding op via de WordPress REST API. */
-async function viaRestApi(slug: string): Promise<{ url: string; alt: string; pagina: string } | null> {
+async function viaRestApi(slug: string, type = "workshops"): Promise<{ url: string; alt: string; pagina: string } | null> {
   try {
-    const res = await fetch(`${SITE}/wp-json/wp/v2/workshops?slug=${encodeURIComponent(slug)}&_embed=wp:featuredmedia`, {
+    const res = await fetch(`${SITE}/wp-json/wp/v2/${type}?slug=${encodeURIComponent(slug)}&_embed=wp:featuredmedia`, {
       headers: { "user-agent": "SkoolWorkshopPlanning/1.0" },
       cache: "no-store",
     });
@@ -38,6 +38,32 @@ async function viaRestApi(slug: string): Promise<{ url: string; alt: string; pag
   }
 }
 
+/** Woorden die op een logo of pictogram wijzen, geen workshopfoto. */
+const GEEN_FOTO = /logo|beeldmerk|icoon|icon|favicon|placeholder|white|wit-|sprite|avatar|vlag|cookie/i;
+
+/**
+ * Laatste terugval: zoek in de pagina naar de eerste echte contentafbeelding.
+ * Veel workshoppagina's hebben geen og:image, maar wel gewoon een foto in de tekst.
+ * We geven voorrang aan bestandsnamen die op de workshop lijken.
+ */
+function viaPaginaAfbeelding(html: string, slug: string): string | null {
+  const kandidaten: string[] = [];
+  const regex = /https:\/\/(?:www\.)?skoolworkshop\.nl\/wp-content\/uploads\/[^"'\s)]+?\.(?:jpg|jpeg|png|webp)/gi;
+  for (const m of html.matchAll(regex)) {
+    const url = m[0];
+    if (GEEN_FOTO.test(url)) continue;
+    // Miniaturen zoals -150x150 slaan we over, we willen een grote foto
+    if (/-\d{2,3}x\d{2,3}\.(jpg|jpeg|png|webp)$/i.test(url)) continue;
+    if (!kandidaten.includes(url)) kandidaten.push(url);
+  }
+  if (kandidaten.length === 0) return null;
+
+  // Voorkeur voor een bestandsnaam die woorden uit de slug bevat
+  const woorden = slug.replace(/^workshop-/, "").split("-").filter((w) => w.length > 3);
+  const raak = kandidaten.find((u) => woorden.some((w) => u.toLowerCase().includes(w)));
+  return raak ?? kandidaten[0];
+}
+
 /** Terugval: lees de og:image uit de workshoppagina. */
 async function viaOgImage(slug: string): Promise<{ url: string; alt: string; pagina: string } | null> {
   const pagina = `${SITE}/workshops/${slug}/`;
@@ -48,9 +74,12 @@ async function viaOgImage(slug: string): Promise<{ url: string; alt: string; pag
     const m =
       /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i.exec(html) ??
       /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i.exec(html);
-    if (!m) return null;
     const alt = /<meta[^>]+property=["']og:image:alt["'][^>]+content=["']([^"']+)["']/i.exec(html)?.[1] ?? "";
-    return { url: m[1], alt, pagina };
+    if (m) return { url: m[1], alt, pagina };
+
+    // Geen og:image? Dan zoeken we een gewone foto in de pagina zelf.
+    const uitPagina = viaPaginaAfbeelding(html, slug);
+    return uitPagina ? { url: uitPagina, alt, pagina } : null;
   } catch {
     return null;
   }
@@ -125,7 +154,10 @@ export async function afbeeldingenSynchroniseren(): Promise<SyncResultaat> {
       continue;
     }
 
-    const bron = (await viaRestApi(w.siteSlug)) ?? (await viaOgImage(w.siteSlug));
+    const bron =
+      (await viaRestApi(w.siteSlug)) ??
+      (await viaRestApi(w.siteSlug, "product")) ??
+      (await viaOgImage(w.siteSlug));
     if (!bron) {
       controle.push({ naam: w.naam, reden: "Geen uitgelichte afbeelding gevonden op de pagina" });
       await db.workshop.update({ where: { id: w.id }, data: { afbeeldingControle: true } });
@@ -152,22 +184,42 @@ export async function afbeeldingenSynchroniseren(): Promise<SyncResultaat> {
   return { gelukt, overgeslagen, controle };
 }
 
-/** Koppelt handmatig een andere pagina aan een workshop en haalt die foto op. */
-export async function afbeeldingHandmatig(workshopId: string, slugOfUrl: string) {
+/**
+ * Handmatig een foto koppelen. Je mag twee dingen invullen:
+ * een directe link naar een afbeelding, of de slug of het adres van een workshoppagina.
+ * De directe link werkt altijd, ook als een pagina geen uitgelichte afbeelding heeft.
+ */
+export async function afbeeldingHandmatig(workshopId: string, invoer: string) {
   const u = await vereisRol(...BEHEER);
   const w = await db.workshop.findUnique({ where: { id: workshopId }, select: { id: true, naam: true } });
   if (!w) return { fout: "Deze workshop bestaat niet." };
 
-  const schoon = slugOfUrl.trim();
-  if (!schoon) return { fout: "Vul een slug of een adres in." };
+  const schoon = invoer.trim();
+  if (!schoon) return { fout: "Vul een fotolink of een pagina in." };
+
+  // Is het een directe link naar een afbeelding? Dan halen we die meteen op.
+  const isAfbeelding = /^https?:\/\/.+\.(jpg|jpeg|png|webp)(\?.*)?$/i.test(schoon);
+  if (isAfbeelding) {
+    const res = await bewaar(w.id, w.naam, { url: schoon, alt: "", pagina: schoon });
+    if (!res.ok && !res.ongewijzigd) return { fout: res.fout ?? "Opslaan lukte niet." };
+    await db.workshop.update({ where: { id: workshopId }, data: { afbeeldingControle: false } });
+    await logAudit({ userId: u.id, actie: "AFBEELDING_GEKOPPELD", entiteit: "Workshop", entiteitId: workshopId, nieuw: { url: schoon }, ip: ipAdres() });
+    revalidatePath("/beheer/workshops");
+    return { ok: true };
+  }
 
   const slug = schoon.startsWith("http")
     ? (schoon.replace(/\/$/, "").split("/").pop() ?? "")
     : schoon.replace(/^\/+|\/+$/g, "");
   if (!slug) return { fout: "Uit dit adres kan ik geen pagina afleiden." };
 
-  const bron = (await viaRestApi(slug)) ?? (await viaOgImage(slug));
-  if (!bron) return { fout: "Op die pagina staat geen uitgelichte afbeelding." };
+  const bron =
+    (await viaRestApi(slug)) ??
+    (await viaRestApi(slug, "product")) ??
+    (await viaOgImage(slug));
+  if (!bron) {
+    return { fout: "Op die pagina vond ik geen foto. Open de pagina, klik met rechts op de foto, kies Afbeeldingslocatie kopiëren en plak die link hier." };
+  }
 
   const res = await bewaar(w.id, w.naam, bron);
   if (!res.ok && !res.ongewijzigd) return { fout: res.fout ?? "Opslaan lukte niet." };

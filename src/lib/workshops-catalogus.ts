@@ -17,10 +17,13 @@ export type CatalogusItem = {
   klantBenodigdheden?: string;
 };
 
+/**
+ * Verkooptarieven van skoolworkshop.nl. Dit is wat de klant betaalt,
+ * niet wat de workshopdocent krijgt. Aanpasbaar onder Instellingen.
+ */
 export const STARTTARIEF = 45;
-export const MATERIAAL_PER_DEELNEMER = 9.5;
 export const EXTRA_DEELNEMER = 7.5;
-export const KM_VERGOEDING = 0.42;
+export const KM_TARIEF_KLANT = 0.38;
 export const MAX_DEELNEMERS = 25;
 
 export const CATEGORIE_KLEUR: Record<CatalogusItem["categorie"], string> = {
@@ -94,4 +97,10 @@ export function rondePrijs(duurMinuten: number, basisPrijs60 = 195): number {
 /** De volledige dagprijs voor een aantal rondes, inclusief starttarief. */
 export function dagPrijs(rondes: number, duurMinuten: number, basisPrijs60 = 195): number {
   return Math.round((STARTTARIEF + rondes * rondePrijs(duurMinuten, basisPrijs60)) * 100) / 100;
+}
+
+/** Wat een groep boven de 25 deelnemers extra kost. */
+export function extraDeelnemers(aantal: number, tarief = EXTRA_DEELNEMER): number {
+  const boven = Math.max(0, aantal - MAX_DEELNEMERS);
+  return Math.round(boven * tarief * 100) / 100;
 }

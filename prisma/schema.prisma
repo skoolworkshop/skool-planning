@@ -311,6 +311,7 @@ model Workshop {
   omschrijving  String?
   standaardDuur Int      @default(60) // minuten
   maxGroep      Int      @default(30)
+  verkoopprijs  Decimal? @db.Decimal(10, 2) // wat de klant betaalt voor 60 minuten
   standaardVergoeding Decimal @default(0) @db.Decimal(10, 2)
   minVergoeding Decimal  @default(0) @db.Decimal(10, 2)
   voorbereidingstijd Int @default(30)
