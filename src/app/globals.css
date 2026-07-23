@@ -11,7 +11,7 @@ html, body {
 }
 
 body {
-  @apply bg-zand-50 text-zand-700 antialiased;
+  @apply bg-white text-zand-700 antialiased;
 }
 
 /* Focus altijd zichtbaar houden voor toetsenbordbediening */

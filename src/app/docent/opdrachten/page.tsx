@@ -105,8 +105,19 @@ export default async function OpenOpdrachten({ searchParams }: { searchParams: {
             const alGereageerd = p.applications.length > 0;
             return (
               <li key={p.id}>
-                <Link href={`/docent/opdrachten/${s.id}`} className="kaart block p-4 transition hover:border-skool-300">
-                  <div className="flex items-start justify-between gap-3">
+                <Link href={`/docent/opdrachten/${s.id}`} className="kaart block overflow-hidden transition hover:border-skool-300">
+                  <div className="aspect-[16/7] w-full overflow-hidden bg-zand-200">
+                    {s.workshop.afbeeldingUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={s.workshop.afbeeldingUrl} alt={s.workshop.afbeeldingAlt ?? ""} className="h-full w-full object-cover" loading="lazy" />
+                    ) : (
+                      <span className="flex h-full items-center justify-center">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/beeldmerk.png" alt="" className="h-8 w-auto opacity-25" />
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-start justify-between gap-3 p-4 pb-0">
                     <div className="min-w-0">
                       <div className="font-semibold">{s.workshop.naam}</div>
                       <div className="text-sm text-zand-600">{datum(s.datum)} · {s.startTijd} tot {s.eindTijd}</div>
@@ -118,7 +129,7 @@ export default async function OpenOpdrachten({ searchParams }: { searchParams: {
                       <Badge kleur={vrij > 1 ? "blauw" : "oranje"}>{vrij} {vrij === 1 ? "plek" : "plekken"}</Badge>
                     </div>
                   </div>
-                  <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <div className="mt-3 flex flex-wrap items-center gap-2 p-4 pt-0">
                     {s.aanmeldDeadline && <span className="text-xs text-zand-500">Reageren voor {datum(s.aanmeldDeadline)}</span>}
                     {alGereageerd && <Badge kleur="groen">Je hebt al gereageerd</Badge>}
                     <span className="ml-auto text-sm font-semibold text-skool-600">Bekijk opdracht →</span>

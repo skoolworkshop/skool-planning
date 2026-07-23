@@ -22,6 +22,9 @@ export default function Aanmeldknop({ positionId, vergoeding }: { positionId: st
         </div>
       )}
 
+      {/* Ruimte reserveren, anders valt de balk over de laatste tekst heen */}
+      <div aria-hidden className="h-20" />
+
       {/* Sticky primaire actie onderaan het scherm */}
       <div className="fixed inset-x-0 bottom-[60px] z-30 border-t border-zand-200 bg-white/95 p-3 backdrop-blur">
         <div className="mx-auto flex max-w-3xl gap-2">
