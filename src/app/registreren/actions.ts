@@ -5,6 +5,7 @@ import { hashWachtwoord, maakSessie, ipAdres, rateLimit } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
 import { meld } from "@/lib/notify";
 
+// PUBLIEK: open aanmeldformulier voor nieuwe workshopdocenten
 export async function registreren(formData: FormData) {
   const ip = ipAdres() ?? "onbekend";
   if (!rateLimit(`reg:${ip}`, 5, 15 * 60_000)) {

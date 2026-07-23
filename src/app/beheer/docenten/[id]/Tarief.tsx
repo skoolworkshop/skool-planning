@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Rij } from "@/components/ui";
 import { euro } from "@/lib/format";
-import { docentTariefOpslaan } from "@/lib/opdracht-acties";
+import { docentTariefOpslaan } from "@/lib/tarief-acties";
 
 type Props = {
   teacherId: string;
@@ -12,7 +12,18 @@ type Props = {
   minDagtarief: number | null;
   kmVergoeding: number | null;
   maxReisAfstand: number | null;
+  tariefVanaf: string;
+  tariefNotitie: string;
+  laatstDoor: string;
+  laatstOp: string;
+  historie: { veld: string; oud: string; nieuw: string; reden: string; wanneer: string; door: string }[];
   standaard: { uurtarief: number; minimumPerDag: number; kmTarief: number };
+};
+
+const VELD_LABEL: Record<string, string> = {
+  uurtarief: "Uurtarief",
+  minDagtarief: "Minimum per opdracht",
+  kmVergoeding: "Kilometervergoeding",
 };
 
 export default function Tarief(p: Props) {
@@ -32,6 +43,24 @@ export default function Tarief(p: Props) {
         <Rij label="Minimum per dag">{p.minDagtarief ? euro(p.minDagtarief) : <span className="text-zand-400">Standaard, {euro(p.standaard.minimumPerDag)}</span>}</Rij>
         <Rij label="Kilometervergoeding">{p.kmVergoeding ? euro(p.kmVergoeding) : <span className="text-zand-400">Standaard, {euro(p.standaard.kmTarief)}</span>}</Rij>
         <Rij label="Maximale reisafstand">{p.maxReisAfstand ? `${p.maxReisAfstand} km` : <span className="text-zand-400">Geen grens</span>}</Rij>
+        <Rij label="Tarief geldt vanaf">{p.tariefVanaf}</Rij>
+        <Rij label="Interne afspraak">{p.tariefNotitie}</Rij>
+        <Rij label="Laatst aangepast">{p.laatstOp ? `${p.laatstOp}${p.laatstDoor ? ` door ${p.laatstDoor}` : ""}` : ""}</Rij>
+
+        {p.historie.length > 0 && (
+          <details className="mt-3">
+            <summary className="cursor-pointer text-sm font-medium text-skool-600">Tariefhistorie ({p.historie.length})</summary>
+            <ul className="mt-2 space-y-1 text-xs text-zand-500">
+              {p.historie.map((h, i) => (
+                <li key={i}>
+                  {h.wanneer} · {VELD_LABEL[h.veld] ?? h.veld}: {h.oud || "leeg"} wordt {h.nieuw || "leeg"}
+                  {h.door ? ` · ${h.door}` : ""}
+                  {h.reden ? ` · ${h.reden}` : ""}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </>
     );
   }
@@ -63,6 +92,18 @@ export default function Tarief(p: Props) {
         <div>
           <label className="label" htmlFor="km">Kilometervergoeding</label>
           <input id="km" name="kmVergoeding" type="number" step="0.01" min="0" defaultValue={p.kmVergoeding ?? ""} placeholder={`Standaard ${p.standaard.kmTarief}`} className="veld" />
+        </div>
+        <div>
+          <label className="label" htmlFor="tv">Tarief geldt vanaf</label>
+          <input id="tv" name="tariefVanaf" type="date" defaultValue={p.tariefVanaf} className="veld" />
+        </div>
+        <div>
+          <label className="label" htmlFor="tn">Interne notitie over de afspraak</label>
+          <textarea id="tn" name="tariefNotitie" rows={2} defaultValue={p.tariefNotitie} className="veld" placeholder="Alleen zichtbaar voor beheerders" />
+        </div>
+        <div>
+          <label className="label" htmlFor="rd">Reden van deze wijziging</label>
+          <input id="rd" name="reden" placeholder="Komt in de auditlog" className="veld" />
         </div>
         <div>
           <label className="label" htmlFor="mr">Maximale reisafstand in km</label>

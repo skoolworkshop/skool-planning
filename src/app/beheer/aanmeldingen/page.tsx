@@ -13,7 +13,7 @@ export default async function AanmeldingenPagina({ searchParams }: { searchParam
   const where: Prisma.ApplicationWhereInput =
     searchParams.filter === "uitnodiging"
       ? { soort: "UITNODIGING", status: "UITGENODIGD" }
-      : { status: { in: ["AANGEMELD", "IN_BEHANDELING", "UITGENODIGD", "BEKEKEN", "RESERVELIJST"] } };
+      : { status: { in: ["AANGEMELD", "IN_BEHANDELING", "UITGENODIGD", "BEKEKEN"] } };
 
   const items = await db.application.findMany({
     where,
@@ -51,31 +51,31 @@ export default async function AanmeldingenPagina({ searchParams }: { searchParam
             </thead>
             <tbody>
               {items.map((a) => (
-                <tr key={a.id} className="hover:bg-neutral-50">
+                <tr key={a.id} className="hover:bg-zand-100">
                   <td>
                     <Link href={`/beheer/docenten/${a.teacher.id}`} className="font-medium hover:text-skool-600">
                       {a.teacher.voornaam} {a.teacher.achternaam}
                     </Link>
-                    <div className="text-xs text-neutral-500">{a.teacher.plaats}</div>
+                    <div className="text-xs text-zand-500">{a.teacher.plaats}</div>
                   </td>
                   <td>
-                    <Link href={`/beheer/opdrachten/${a.position.sessionId}`} className="font-medium hover:text-skool-600">
+                    <Link href={`/beheer/opdrachten/moment/${a.position.sessionId}`} className="font-medium hover:text-skool-600">
                       {a.position.session.workshop.naam}
                     </Link>
-                    <div className="text-xs text-neutral-500">{a.position.session.project.client.naam}, {a.position.session.location?.plaats}</div>
+                    <div className="text-xs text-zand-500">{a.position.session.project.client.naam}, {a.position.session.location?.plaats}</div>
                   </td>
                   <td className="hidden md:table-cell whitespace-nowrap">{datum(a.position.session.datum)}</td>
                   <td className="hidden lg:table-cell">{euro(a.position.vergoeding)}</td>
                   <td className="text-xs">{a.soort === "UITNODIGING" ? "Uitnodiging" : "Aanmelding"}</td>
                   <td><Badge kleur={statusKleur(a.status)}>{label(a.status)}</Badge></td>
-                  <td className="hidden lg:table-cell text-xs text-neutral-500">{datumTijd(a.createdAt)}</td>
+                  <td className="hidden lg:table-cell text-xs text-zand-500">{datumTijd(a.createdAt)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </Kaart>
       )}
-      <p className="mt-3 text-sm text-neutral-500">Beoordelen en selecteren doe je op de opdrachtpagina, daar zie je alle kandidaten naast elkaar.</p>
+      <p className="mt-3 text-sm text-zand-500">Beoordelen en selecteren doe je op de opdrachtpagina, daar zie je alle kandidaten naast elkaar.</p>
     </>
   );
 }

@@ -4,6 +4,7 @@ import { vereisGebruiker } from "@/lib/auth";
 import { PaginaKop, Kaart, Badge, statusKleur, Leeg } from "@/components/ui";
 import { label } from "@/lib/format";
 import UitnodigenForm from "./UitnodigenForm";
+import { isVerlopen } from "@/lib/documenten";
 
 export const dynamic = "force-dynamic";
 
@@ -28,7 +29,7 @@ export default async function DocentenPagina({ searchParams }: { searchParams: {
     include: {
       user: { select: { email: true } },
       skills: { select: { id: true } },
-      documents: { select: { status: true, vervaldatum: true } },
+      documents: { select: { type: true, status: true, vervaldatum: true } },
       _count: { select: { assignments: true } },
     },
     orderBy: [{ status: "asc" }, { achternaam: "asc" }],
@@ -74,21 +75,21 @@ export default async function DocentenPagina({ searchParams }: { searchParams: {
             <tbody>
               {docenten.map((d) => {
                 const problemen = d.documents.filter(
-                  (x) => x.status === "VERLOPEN" || x.status === "AFGEKEURD" || (x.vervaldatum && x.vervaldatum < nu)
+                  (x) => x.status === "AFGEKEURD" || isVerlopen(x, nu)
                 ).length;
                 return (
-                  <tr key={d.id} className="hover:bg-neutral-50">
+                  <tr key={d.id} className="hover:bg-zand-100">
                     <td>
-                      <Link href={`/beheer/docenten/${d.id}`} className="font-semibold text-neutral-900 hover:text-skool-600">
+                      <Link href={`/beheer/docenten/${d.id}`} className="font-semibold text-zand-700 hover:text-skool-600">
                         {[d.voornaam, d.tussenvoegsel, d.achternaam].filter(Boolean).join(" ")}
                       </Link>
-                      <div className="text-xs text-neutral-500">{d.user.email}</div>
+                      <div className="text-xs text-zand-500">{d.user.email}</div>
                     </td>
                     <td className="hidden sm:table-cell">{d.plaats ?? "-"}</td>
                     <td><Badge kleur={statusKleur(d.status)}>{label(d.status)}</Badge></td>
                     <td className="hidden md:table-cell">{d.skills.length}</td>
                     <td className="hidden md:table-cell">
-                      {problemen > 0 ? <Badge kleur="rood">{problemen} aandacht</Badge> : <span className="text-neutral-400">In orde</span>}
+                      {problemen > 0 ? <Badge kleur="rood">{problemen} aandacht</Badge> : <span className="text-zand-400">In orde</span>}
                     </td>
                     <td className="hidden lg:table-cell">{d._count.assignments}</td>
                   </tr>

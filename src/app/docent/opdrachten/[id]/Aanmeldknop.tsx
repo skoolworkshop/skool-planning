@@ -23,7 +23,7 @@ export default function Aanmeldknop({ positionId, vergoeding }: { positionId: st
       )}
 
       {/* Sticky primaire actie onderaan het scherm */}
-      <div className="fixed inset-x-0 bottom-[60px] z-30 border-t border-neutral-200 bg-white/95 p-3 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-[60px] z-30 border-t border-zand-200 bg-white/95 p-3 backdrop-blur">
         <div className="mx-auto flex max-w-3xl gap-2">
           {!open ? (
             <button className="knop-primair flex-1" onClick={() => setOpen(true)}>

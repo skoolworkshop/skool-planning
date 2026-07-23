@@ -4,10 +4,11 @@ import { db } from "@/lib/db";
 import { PaginaKop, Kaart, Badge, statusKleur, Melding } from "@/components/ui";
 import { label, datum } from "@/lib/format";
 import ProfielFormulier from "./ProfielFormulier";
-import WorkshopKiezer from "./WorkshopKiezer";
+import MijnWorkshops from "./MijnWorkshops";
 import Weekdagen from "./Weekdagen";
 import Indienen from "./Indienen";
 import { uitloggen } from "@/lib/acties";
+import { isVerlopen, toonStatus, kentVervaldatum } from "@/lib/documenten";
 
 export const dynamic = "force-dynamic";
 
@@ -34,7 +35,7 @@ export default async function ProfielPagina() {
   const gekozen = teacher.skills.map((s) => s.workshopId);
   const weekdagen = teacher.availability.filter((a) => a.beschikbaar).map((a) => a.weekdag as number);
   const nu = new Date();
-  const verlopen = teacher.documents.filter((d) => d.vervaldatum && d.vervaldatum < nu);
+  const verlopen = teacher.documents.filter((d) => isVerlopen(d, nu));
   const compleet = Boolean(teacher.telefoon && teacher.plaats && teacher.iban && gekozen.length > 0);
 
   const profiel = {
@@ -43,7 +44,6 @@ export default async function ProfielPagina() {
     achternaam: teacher.achternaam,
     telefoon: teacher.telefoon ?? "",
     geboortedatum: teacher.geboortedatum ? teacher.geboortedatum.toISOString().slice(0, 10) : "",
-    bio: teacher.bio ?? "",
     noodcontact: teacher.noodcontact ?? "",
     noodcontactTel: teacher.noodcontactTel ?? "",
     straat: teacher.straat ?? "",
@@ -92,40 +92,48 @@ export default async function ProfielPagina() {
 
       <Kaart>
         <h2 className="font-semibold">Mijn workshops</h2>
-        <p className="mt-1 text-sm text-neutral-500">
-          Kies wat je kunt geven. Je ziet alleen opdrachten van workshops die hier aan staan.
-        </p>
-        <WorkshopKiezer
-          workshops={workshops.map((w) => ({ id: w.id, naam: w.naam, categorie: w.category.naam }))}
-          gekozen={gekozen}
+        <MijnWorkshops
+          items={teacher.skills.map((sk) => {
+            const w = workshops.find((x) => x.id === sk.workshopId);
+            return {
+              id: sk.id,
+              naam: w?.naam ?? "Onbekende workshop",
+              categorie: w?.category.naam ?? "",
+              kleur: w?.category.kleur ?? "#F49700",
+              korteOmschrijving: w?.korteOmschrijving ?? "",
+              afbeeldingUrl: w?.afbeeldingUrl ?? null,
+              afbeeldingAlt: w?.afbeeldingAlt ?? null,
+              bevoegdheid: sk.bevoegdheid,
+            };
+          })}
         />
       </Kaart>
 
       <Kaart>
         <h2 className="font-semibold">Vaste beschikbaarheid</h2>
-        <p className="mt-1 text-sm text-neutral-500">
-          Op welke dagen kun je meestal werken? Losse dagen zet je in je kalender.
+        <p className="mt-1 text-sm text-zand-500">
+          Op welke dagen kun je meestal werken?
         </p>
         <Weekdagen actief={weekdagen} />
       </Kaart>
 
       <Kaart>
         <h2 className="font-semibold">Documenten</h2>
-        <p className="mt-1 text-sm text-neutral-500">
+        <p className="mt-1 text-sm text-zand-500">
           Aanleveren gaat via de planner. Hier zie je de status.
         </p>
         <div className="mt-3 space-y-2">
           {teacher.documents.length === 0 && (
-            <p className="text-sm text-neutral-400">Er staan nog geen documenten in je dossier.</p>
+            <p className="text-sm text-zand-400">Er staan nog geen documenten in je dossier.</p>
           )}
           {teacher.documents.map((d) => (
-            <div key={d.id} className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 px-3 py-2 text-sm">
+            <div key={d.id} className="flex items-center justify-between gap-3 rounded-lg border border-zand-200 px-3 py-2 text-sm">
               <div>
                 <div className="font-medium">{label(d.type)}</div>
-                {d.vervaldatum && <div className="text-xs text-neutral-500">Geldig tot {datum(d.vervaldatum)}</div>}
+                {kentVervaldatum(d.type) && d.vervaldatum && <div className="text-xs text-zand-500">Geldig tot {datum(d.vervaldatum)}</div>}
               </div>
-              <Badge kleur={statusKleur(d.vervaldatum && d.vervaldatum < nu ? "VERLOPEN" : d.status)}>
-                {label(d.vervaldatum && d.vervaldatum < nu ? "VERLOPEN" : d.status)}
+              <Badge kleur={statusKleur(toonStatus(d, nu))}>
+                {label(toonStatus(d, nu))}
               </Badge>
             </div>
           ))}

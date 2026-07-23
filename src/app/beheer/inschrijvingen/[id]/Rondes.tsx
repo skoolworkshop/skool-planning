@@ -49,7 +49,7 @@ export default function Rondes({
       </div>
 
       {nieuweRonde && (
-        <form action={ronde} className="mt-3 flex flex-wrap items-end gap-2 rounded-lg bg-neutral-50 p-3">
+        <form action={ronde} className="mt-3 flex flex-wrap items-end gap-2 rounded-lg bg-zand-100 p-3">
           <div>
             <label className="label" htmlFor="startTijd">Van</label>
             <input id="startTijd" name="startTijd" type="time" className="veld" defaultValue="09:00" required />
@@ -70,18 +70,18 @@ export default function Rondes({
 
       <div className="mt-4 space-y-4">
         {rondes.length === 0 && (
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-zand-500">
             Nog geen rondes. Een cultuurdag heeft er meestal drie van 75 minuten.
           </p>
         )}
 
         {rondes.map((r) => (
-          <div key={r.id} className="rounded-xl border border-neutral-200 p-3">
+          <div key={r.id} className="rounded-xl border border-zand-200 p-3">
             <div className="flex items-center justify-between gap-2">
               <div>
                 <span className="font-semibold">Ronde {r.nummer}</span>
-                {r.naam && <span className="text-neutral-500"> · {r.naam}</span>}
-                <span className="text-neutral-500"> · {r.startTijd} tot {r.eindTijd}</span>
+                {r.naam && <span className="text-zand-500"> · {r.naam}</span>}
+                <span className="text-zand-500"> · {r.startTijd} tot {r.eindTijd}</span>
               </div>
               <div className="flex gap-2">
                 <button
@@ -103,7 +103,7 @@ export default function Rondes({
             </div>
 
             {openSlot === r.id && (
-              <form action={slot} className="mt-3 flex flex-wrap items-end gap-2 rounded-lg bg-neutral-50 p-3">
+              <form action={slot} className="mt-3 flex flex-wrap items-end gap-2 rounded-lg bg-zand-100 p-3">
                 <input type="hidden" name="roundId" value={r.id} />
                 <input type="hidden" name="enrollmentId" value={enrollmentId} />
                 <div className="min-w-48">
@@ -135,24 +135,24 @@ export default function Rondes({
             )}
 
             <div className="mt-3 space-y-2">
-              {r.slots.length === 0 && <p className="text-sm text-neutral-400">Nog geen workshops in deze ronde.</p>}
+              {r.slots.length === 0 && <p className="text-sm text-zand-400">Nog geen workshops in deze ronde.</p>}
               {r.slots.map((s) => {
                 const vol = s.bezet >= s.capaciteit;
                 const pct = s.capaciteit > 0 ? Math.round((s.bezet / s.capaciteit) * 100) : 0;
                 return (
-                  <div key={s.id} className="flex items-center gap-3 rounded-lg border border-neutral-200 px-3 py-2 text-sm">
+                  <div key={s.id} className="flex items-center gap-3 rounded-lg border border-zand-200 px-3 py-2 text-sm">
                     <div className="min-w-0 flex-1">
                       <div className="font-medium">{s.workshop}</div>
-                      <div className="text-neutral-500">
+                      <div className="text-zand-500">
                         {s.ruimte ?? "ruimte nog niet bekend"}
                         {s.docent ? ` · ${s.docent}` : " · nog geen workshopdocent"}
                       </div>
                     </div>
                     <div className="w-32">
-                      <div className={`text-right text-xs ${vol ? "font-semibold text-skool-700" : "text-neutral-500"}`}>
+                      <div className={`text-right text-xs ${vol ? "font-semibold text-skool-700" : "text-zand-500"}`}>
                         {s.bezet} van {s.capaciteit}
                       </div>
-                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-neutral-100">
+                      <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-zand-100">
                         <div className={`h-full rounded-full ${vol ? "bg-skool-600" : "bg-skool-400"}`} style={{ width: `${Math.min(100, pct)}%` }} />
                       </div>
                     </div>

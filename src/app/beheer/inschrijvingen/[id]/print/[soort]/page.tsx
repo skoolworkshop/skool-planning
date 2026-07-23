@@ -20,14 +20,14 @@ export default async function PrintPagina({ params }: { params: { id: string; so
     <div className="mx-auto max-w-5xl bg-white p-8 print:p-0">
       <Printknop />
 
-      <div className="mb-5 border-b border-neutral-300 pb-3">
+      <div className="mb-5 border-b border-zand-300 pb-3">
         <h1 className="text-2xl font-bold">{LIJST_TITEL[soort]}</h1>
-        <p className="text-sm text-neutral-600">
+        <p className="text-sm text-zand-600">
           {e.titel} · {e.project.client.naam}
           {e.project.startDatum ? ` · ${datum(e.project.startDatum)}` : ""}
         </p>
         {e.project.location && (
-          <p className="text-sm text-neutral-600">
+          <p className="text-sm text-zand-600">
             {e.project.location.naam}, {e.project.location.plaats}
           </p>
         )}
@@ -41,7 +41,7 @@ export default async function PrintPagina({ params }: { params: { id: string; so
         </thead>
         <tbody>
           {rijen.map((r, i) => (
-            <tr key={i} className="break-inside-avoid border-b border-neutral-200">
+            <tr key={i} className="break-inside-avoid border-b border-zand-200">
               {r.map((v, j) => (
                 <td key={j} className="py-1.5 pr-3 align-top">
                   {soort === "presentie" && j === kop.length - 1
@@ -55,10 +55,10 @@ export default async function PrintPagina({ params }: { params: { id: string; so
       </table>
 
       {rijen.length === 0 && (
-        <p className="mt-4 text-sm text-neutral-500">Er is nog niets om te tonen.</p>
+        <p className="mt-4 text-sm text-zand-500">Er is nog niets om te tonen.</p>
       )}
 
-      <p className="mt-6 text-xs text-neutral-400 print:fixed print:bottom-2">
+      <p className="mt-6 text-xs text-zand-400 print:fixed print:bottom-2">
         Skool Workshop · {LIJST_TITEL[soort]} · {new Date().toLocaleDateString("nl-NL")}
       </p>
     </div>

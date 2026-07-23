@@ -48,7 +48,7 @@ export default function Medewerkers({ gebruikers }: { gebruikers: { id: string; 
 
       <ul className="space-y-1 text-sm">
         {gebruikers.map((g) => (
-          <li key={g.id} className="flex items-center gap-2 border-b border-neutral-100 py-1.5">
+          <li key={g.id} className="flex items-center gap-2 border-b border-zand-200 py-1.5">
             <span className="font-medium">{g.email}</span>
             <Badge kleur="grijs">{g.rol}</Badge>
             {!g.actief && <Badge kleur="rood">Inactief</Badge>}

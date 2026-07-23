@@ -22,7 +22,7 @@ export default function CodeFormulier() {
   return (
     <div className="pt-8">
       <h1 className="text-2xl font-bold">Kies je workshops</h1>
-      <p className="mt-2 text-neutral-600">
+      <p className="mt-2 text-zand-600">
         Vul de code in die je van school hebt gekregen.
       </p>
 
@@ -45,7 +45,7 @@ export default function CodeFormulier() {
         </button>
       </div>
 
-      <p className="mt-6 text-center text-sm text-neutral-500">
+      <p className="mt-6 text-center text-sm text-zand-500">
         Code kwijt? Vraag het aan je mentor.
       </p>
     </div>

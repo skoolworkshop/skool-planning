@@ -31,33 +31,33 @@ export default function DeclaratieRij(props: {
     <div className="kaart p-4">
       <button onClick={() => setOpen(!open)} className="flex w-full flex-wrap items-center gap-x-3 gap-y-1 text-left">
         <span className="font-semibold">{props.docent}</span>
-        <span className="text-sm text-neutral-500">{props.workshop}, {props.klant}</span>
-        <span className="text-sm text-neutral-500">{props.opdrachtDatum}</span>
+        <span className="text-sm text-zand-500">{props.workshop}, {props.klant}</span>
+        <span className="text-sm text-zand-500">{props.opdrachtDatum}</span>
         <span className="ml-auto font-semibold">{euro(props.totaal)}</span>
         <Badge kleur={statusKleur(props.status)}>{label(props.status)}</Badge>
       </button>
 
       {open && (
-        <div className="mt-4 space-y-3 border-t border-neutral-100 pt-3 text-sm">
+        <div className="mt-4 space-y-3 border-t border-zand-200 pt-3 text-sm">
           <div className="grid gap-1 sm:grid-cols-2">
             {props.regels.map(([k, v]) => (
-              <div key={k} className="flex justify-between border-b border-neutral-100 py-1">
-                <span className="text-neutral-500">{k}</span><span>{v}</span>
+              <div key={k} className="flex justify-between border-b border-zand-200 py-1">
+                <span className="text-zand-500">{k}</span><span>{v}</span>
               </div>
             ))}
-            <div className="flex justify-between border-b border-neutral-100 py-1">
-              <span className="text-neutral-500">Gewerkte uren</span><span>{props.uren}</span>
+            <div className="flex justify-between border-b border-zand-200 py-1">
+              <span className="text-zand-500">Gewerkte uren</span><span>{props.uren}</span>
             </div>
-            <div className="flex justify-between border-b border-neutral-100 py-1">
-              <span className="text-neutral-500">Kilometers</span><span>{props.kilometers}</span>
+            <div className="flex justify-between border-b border-zand-200 py-1">
+              <span className="text-zand-500">Kilometers</span><span>{props.kilometers}</span>
             </div>
             {props.iban && (
-              <div className="flex justify-between border-b border-neutral-100 py-1">
-                <span className="text-neutral-500">Bankrekening</span><span className="font-mono text-xs">{props.iban}</span>
+              <div className="flex justify-between border-b border-zand-200 py-1">
+                <span className="text-zand-500">Bankrekening</span><span className="font-mono text-xs">{props.iban}</span>
               </div>
             )}
           </div>
-          {props.opmerking && <p className="rounded bg-neutral-50 p-2">Opmerking docent: {props.opmerking}</p>}
+          {props.opmerking && <p className="rounded bg-zand-100 p-2">Opmerking docent: {props.opmerking}</p>}
           {props.incident && <p className="rounded bg-amber-50 p-2 text-amber-900">Incident: {props.incident}</p>}
 
           {props.magBeoordelen && (

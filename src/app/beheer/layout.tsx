@@ -8,8 +8,6 @@ export const dynamic = "force-dynamic";
 
 const ITEMS: NavItem[] = [
   { href: "/beheer", label: "Dashboard", icoon: "🏠" },
-  { href: "/beheer/planning", label: "Planning", icoon: "🗓" },
-  { href: "/beheer/projecten", label: "Projecten", icoon: "📁" },
   { href: "/beheer/opdrachten", label: "Opdrachten", icoon: "📌" },
   { href: "/beheer/aanmeldingen", label: "Aanmeldingen", icoon: "✋" },
   { href: "/beheer/inschrijvingen", label: "Inschrijvingen", icoon: "📝" },
@@ -32,7 +30,7 @@ export default async function BeheerLayout({ children }: { children: React.React
   return (
     <div className="min-h-screen">
       <DesktopNav items={ITEMS} naam={naam} rol={ROL_LABEL[u.role]} ongelezen={ongelezen} />
-      <main className="px-4 py-5 sm:px-6 lg:ml-60 lg:px-8 lg:py-8">{children}</main>
+      <main className="mx-auto max-w-[1400px] px-4 py-5 sm:px-6 lg:ml-60 lg:px-8 lg:py-8">{children}</main>
     </div>
   );
 }

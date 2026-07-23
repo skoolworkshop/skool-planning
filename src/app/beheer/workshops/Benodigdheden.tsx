@@ -13,15 +13,15 @@ export default function Benodigdheden({ workshopId, naam, tekst, link }: Props) 
 
   if (!open) {
     return (
-      <div className="mt-3 border-t border-neutral-100 pt-2">
+      <div className="mt-3 border-t border-zand-200 pt-2">
         <div className="flex items-start justify-between gap-2">
-          <span className="text-xs font-medium text-neutral-500">Benodigdheden voor de klant</span>
+          <span className="text-xs font-medium text-zand-500">Benodigdheden voor de klant</span>
           <button type="button" onClick={() => setOpen(true)} className="knop knop-ghost px-2 py-0.5 text-xs">
             {tekst ? "Bewerken" : "Invullen"}
           </button>
         </div>
-        <p className="mt-1 line-clamp-3 text-xs text-neutral-600">
-          {tekst || <span className="text-neutral-400">Nog niet ingevuld. Deze tekst komt in de bevestigingsmail.</span>}
+        <p className="mt-1 line-clamp-3 text-xs text-zand-600">
+          {tekst || <span className="text-zand-400">Nog niet ingevuld. Deze tekst komt in de bevestigingsmail.</span>}
         </p>
       </div>
     );
@@ -29,7 +29,7 @@ export default function Benodigdheden({ workshopId, naam, tekst, link }: Props) 
 
   return (
     <form
-      className="mt-3 space-y-2 border-t border-neutral-100 pt-3"
+      className="mt-3 space-y-2 border-t border-zand-200 pt-3"
       action={(fd) => {
         start(async () => {
           await workshopTekstOpslaan(workshopId, fd);

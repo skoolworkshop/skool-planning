@@ -9,6 +9,7 @@ import crypto from "crypto";
 
 export type LoginState = { fout?: string };
 
+// PUBLIEK: iedereen mag inloggen, wel met een snelheidslimiet
 export async function inloggen(_prev: LoginState, formData: FormData): Promise<LoginState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const wachtwoord = String(formData.get("wachtwoord") ?? "");
@@ -49,6 +50,7 @@ export async function inloggen(_prev: LoginState, formData: FormData): Promise<L
   redirect(user.role === "DOCENT" ? "/docent" : "/beheer");
 }
 
+// PUBLIEK: iedereen mag een resetlink aanvragen, wel met een snelheidslimiet
 export async function wachtwoordVergeten(_prev: LoginState, formData: FormData): Promise<LoginState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   if (!rateLimit(`reset:${email}`, 3, 15 * 60_000)) {
@@ -73,6 +75,7 @@ export async function wachtwoordVergeten(_prev: LoginState, formData: FormData):
   return { fout: "Als dit adres bij ons bekend is, staat er een e-mail voor je klaar." };
 }
 
+// PUBLIEK: beveiligd met een eenmalige token uit de mail
 export async function wachtwoordInstellen(token: string, wachtwoord: string) {
   const user = await db.user.findFirst({
     where: { OR: [{ resetToken: token }, { inviteToken: token }] },

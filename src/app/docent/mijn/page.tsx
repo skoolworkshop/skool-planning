@@ -30,7 +30,7 @@ export default async function MijnOpdrachten({ searchParams }: { searchParams: {
       orderBy: { createdAt: "desc" },
     }),
     db.application.findMany({
-      where: { teacherId: t.id, soort: "AANMELDING", status: { in: ["AANGEMELD", "IN_BEHANDELING", "RESERVELIJST"] } },
+      where: { teacherId: t.id, soort: "AANMELDING", status: { in: ["AANGEMELD", "IN_BEHANDELING"] } },
       include: { position: { include: { session: { include: { workshop: true, location: true, project: { include: { client: true } } } } } } },
       orderBy: { createdAt: "desc" },
     }),
@@ -67,7 +67,7 @@ export default async function MijnOpdrachten({ searchParams }: { searchParams: {
             <Link
               key={x.k}
               href={`/docent/mijn?tab=${x.k}`}
-              className={`knop shrink-0 px-3 text-sm ${tab === x.k ? "bg-skool-500 text-white" : "border border-neutral-300 bg-white text-neutral-700"}`}
+              className={`knop shrink-0 px-3 text-sm ${tab === x.k ? "bg-skool-500 text-white" : "border border-zand-300 bg-white text-zand-600"}`}
             >
               {x.l}
               {aantal[x.k] > 0 && <span className="ml-1 opacity-70">{aantal[x.k]}</span>}
@@ -123,7 +123,6 @@ export default async function MijnOpdrachten({ searchParams }: { searchParams: {
             kleding: s.kleding,
             bijzonderheden: s.bijzonderheden,
             vergoeding: euro(a.position.vergoeding),
-            bevestigd: a.bevestigd,
             declaratieStatus: a.workReg?.status ?? null,
             declaratieTotaal: a.workReg ? euro(a.workReg.totaal) : null,
             sessionId: s.id,

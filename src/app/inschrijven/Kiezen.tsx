@@ -44,7 +44,7 @@ export default function Kiezen({ data }: { data: Data }) {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold">{data.titel}</h1>
-          <p className="text-sm text-neutral-500">{data.naam} · {data.klas}</p>
+          <p className="text-sm text-zand-500">{data.naam} · {data.klas}</p>
         </div>
         <button
           className="knop-ghost text-sm"
@@ -54,13 +54,13 @@ export default function Kiezen({ data }: { data: Data }) {
         </button>
       </div>
 
-      {data.welkomtekst && <p className="mt-3 text-neutral-600">{data.welkomtekst}</p>}
+      {data.welkomtekst && <p className="mt-3 text-zand-600">{data.welkomtekst}</p>}
 
       <div className="mt-4">
-        <div className="flex justify-between text-sm text-neutral-500">
+        <div className="flex justify-between text-sm text-zand-500">
           <span>Ronde {gedaan} van {data.rondes.length} gekozen</span>
         </div>
-        <div className="mt-1 h-2 overflow-hidden rounded-full bg-neutral-200">
+        <div className="mt-1 h-2 overflow-hidden rounded-full bg-zand-200">
           <div
             className="h-full rounded-full bg-skool-500 transition-all"
             style={{ width: `${data.rondes.length ? (gedaan / data.rondes.length) * 100 : 0}%` }}
@@ -80,7 +80,7 @@ export default function Kiezen({ data }: { data: Data }) {
                   ? "border-skool-400 bg-skool-500 font-medium text-white"
                   : r.gekozenSlotId
                   ? "border-skool-200 bg-skool-50 text-skool-800"
-                  : "border-neutral-300 bg-white text-neutral-700"
+                  : "border-zand-300 bg-white text-zand-600"
               }`}
             >
               {r.gekozenSlotId ? "✓ " : ""}Ronde {r.nummer}
@@ -97,7 +97,7 @@ export default function Kiezen({ data }: { data: Data }) {
 
       {huidige && (
         <div className="mt-4">
-          <div className="text-sm text-neutral-500">
+          <div className="text-sm text-zand-500">
             {huidige.naam ? `${huidige.naam} · ` : ""}{huidige.startTijd} tot {huidige.eindTijd}
           </div>
 
@@ -117,18 +117,18 @@ export default function Kiezen({ data }: { data: Data }) {
                     gekozen
                       ? "border-skool-500 bg-skool-50 ring-2 ring-skool-200"
                       : vol
-                      ? "border-neutral-200 bg-neutral-100 opacity-60"
-                      : "border-neutral-200 bg-white hover:border-skool-300"
+                      ? "border-zand-200 bg-zand-100 opacity-60"
+                      : "border-zand-200 bg-white hover:border-skool-300"
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="font-semibold">{s.workshop}</div>
-                      <div className="text-xs uppercase tracking-wide text-neutral-400">{s.categorie}</div>
+                      <div className="text-xs uppercase tracking-wide text-zand-400">{s.categorie}</div>
                       {s.omschrijving && (
-                        <p className="mt-1 text-sm text-neutral-600">{s.omschrijving}</p>
+                        <p className="mt-1 text-sm text-zand-600">{s.omschrijving}</p>
                       )}
-                      {s.ruimte && <p className="mt-1 text-sm text-neutral-500">{s.ruimte}</p>}
+                      {s.ruimte && <p className="mt-1 text-sm text-zand-500">{s.ruimte}</p>}
                     </div>
                     <div className="shrink-0 text-right">
                       {gekozen ? (
@@ -136,11 +136,11 @@ export default function Kiezen({ data }: { data: Data }) {
                           Gekozen
                         </span>
                       ) : vol ? (
-                        <span className="rounded-full bg-neutral-200 px-3 py-1 text-xs font-medium text-neutral-600">
+                        <span className="rounded-full bg-zand-200 px-3 py-1 text-xs font-medium text-zand-600">
                           Vol
                         </span>
                       ) : data.toonVrijePlekken ? (
-                        <span className={`text-sm ${bijnaVol ? "font-semibold text-skool-700" : "text-neutral-500"}`}>
+                        <span className={`text-sm ${bijnaVol ? "font-semibold text-skool-700" : "text-zand-500"}`}>
                           {s.vrij} vrij
                         </span>
                       ) : null}
@@ -152,7 +152,7 @@ export default function Kiezen({ data }: { data: Data }) {
           </div>
 
           {huidige.gekozenSlotId && data.wijzigenToegestaan && (
-            <p className="mt-3 text-sm text-neutral-500">
+            <p className="mt-3 text-sm text-zand-500">
               Je kunt je keuze nog aanpassen. Tik op een andere workshop.
             </p>
           )}

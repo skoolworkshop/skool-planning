@@ -59,7 +59,7 @@ export async function GET(req: Request) {
       s.project.ordernummer,
       toewijzingen.map((a) => `${a.teacher.voornaam} ${a.teacher.achternaam}`).join(", "),
       s.positions.reduce((n, p) => n + p.aantal, 0),
-      toewijzingen.filter((a) => !a.reserve).length,
+      toewijzingen.filter((a) => !a.uitgevallen).length,
       Number(s.vergoeding).toFixed(2).replace(".", ","),
       kosten.toFixed(2).replace(".", ","),
       km,

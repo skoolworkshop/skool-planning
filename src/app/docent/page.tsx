@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { vereisGebruiker } from "@/lib/auth";
 import { Kaart, Badge, statusKleur, Melding, Leeg } from "@/components/ui";
 import { datum, datumLang, euro, label } from "@/lib/format";
+import { isVerlopen } from "@/lib/documenten";
 
 export const dynamic = "force-dynamic";
 
@@ -37,12 +38,14 @@ export default async function DocentHome() {
     }),
   ]);
 
-  const verlopen = t.documents.filter((d) => d.vervaldatum && d.vervaldatum < nu);
+  const verlopen = t.documents.filter((d) => isVerlopen(d, nu));
 
   return (
     <>
-      <h1 className="mb-1 text-2xl font-bold">Hoi {t.voornaam}</h1>
-      <p className="mb-5 text-sm text-neutral-500">{datumLang(nu)}</p>
+      <div className="mb-5">
+        <p className="text-sm text-zand-500">{datumLang(nu)}</p>
+        <h1 className="mt-0.5 text-2xl font-semibold tracking-tight text-zand-700">Hoi {t.voornaam}</h1>
+      </div>
 
       {t.status !== "GOEDGEKEURD" && (
         <div className="mb-4">
@@ -64,29 +67,22 @@ export default async function DocentHome() {
         </div>
       )}
 
-      <div className="mb-5 grid grid-cols-3 gap-3">
-        <Link href="/docent/mijn?tab=uitnodigingen" className="kaart p-3 text-center">
-          <div className="text-2xl font-bold text-skool-600">{uitnodigingen}</div>
-          <div className="text-xs text-neutral-500">Uitnodigingen</div>
+      <div className="mb-6 grid grid-cols-3 gap-3">
+        <Link href="/docent/mijn?tab=uitnodigingen" className="kaart p-3.5 text-center transition hover:shadow-zacht">
+          <div className="text-2xl font-semibold text-skool-600">{uitnodigingen}</div>
+          <div className="mt-0.5 text-xs text-zand-500">Uitnodigingen</div>
         </Link>
-        <Link href="/docent/opdrachten" className="kaart p-3 text-center">
-          <div className="text-2xl font-bold">{openPosities}</div>
-          <div className="text-xs text-neutral-500">Open opdrachten</div>
+        <Link href="/docent/opdrachten" className="kaart p-3.5 text-center transition hover:shadow-zacht">
+          <div className="text-2xl font-semibold text-zand-700">{openPosities}</div>
+          <div className="mt-0.5 text-xs text-zand-500">Open opdrachten</div>
         </Link>
-        <Link href="/docent/mijn?tab=afronden" className="kaart p-3 text-center">
-          <div className="text-2xl font-bold">{teDeclareren}</div>
-          <div className="text-xs text-neutral-500">Af te ronden</div>
-        </Link>
-      </div>
-
-      <div className="mb-4">
-        <Link href="/docent/kalender" className="kaart flex items-center justify-between p-3 text-sm">
-          <span className="font-medium">Mijn kalender en beschikbaarheid</span>
-          <span className="text-neutral-400">›</span>
+        <Link href="/docent/mijn?tab=afronden" className="kaart p-3.5 text-center transition hover:shadow-zacht">
+          <div className="text-2xl font-semibold text-zand-700">{teDeclareren}</div>
+          <div className="mt-0.5 text-xs text-zand-500">Af te ronden</div>
         </Link>
       </div>
 
-      <h2 className="mb-2 font-semibold">Mijn komende opdrachten</h2>
+      <h2 className="mb-3 font-semibold text-zand-700">Mijn komende opdrachten</h2>
       {komende.length === 0 ? (
         <Leeg
           titel="Nog niets ingepland"
@@ -103,12 +99,11 @@ export default async function DocentHome() {
                   <div className="flex items-start justify-between gap-2">
                     <div>
                       <div className="font-semibold">{s.workshop.naam}</div>
-                      <div className="text-sm text-neutral-500">{datum(s.datum)} · {s.startTijd} tot {s.eindTijd}</div>
-                      <div className="text-sm text-neutral-500">{s.project.client.naam}, {s.location?.plaats}</div>
+                      <div className="text-sm text-zand-500">{datum(s.datum)} · {s.startTijd} tot {s.eindTijd}</div>
+                      <div className="text-sm text-zand-500">{s.project.client.naam}, {s.location?.plaats}</div>
                     </div>
                     <div className="text-right">
                       <div className="font-semibold">{euro(a.position.vergoeding)}</div>
-                      {!a.bevestigd && <Badge kleur="geel">Bevestigen</Badge>}
                     </div>
                   </div>
                 </Link>

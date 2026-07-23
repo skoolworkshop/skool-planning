@@ -52,8 +52,8 @@ export default function Leerlingen({ enrollmentId, leerlingen }: { enrollmentId:
       </div>
 
       {open && (
-        <div className="mt-3 rounded-lg bg-neutral-50 p-3">
-          <p className="text-sm text-neutral-600">
+        <div className="mt-3 rounded-lg bg-zand-100 p-3">
+          <p className="text-sm text-zand-600">
             Plak de lijst of kies een CSV bestand. Kolommen: voornaam, achternaam, klas, email.
             De eerste regel mag een koprij zijn.
           </p>
@@ -75,13 +75,13 @@ export default function Leerlingen({ enrollmentId, leerlingen }: { enrollmentId:
       {ok && <div className="mt-3"><Melding soort="ok">{ok}</Melding></div>}
 
       {leerlingen.length === 0 ? (
-        <p className="mt-3 text-sm text-neutral-500">
+        <p className="mt-3 text-sm text-zand-500">
           Nog geen leerlingen. Zonder lijst kunnen leerlingen zichzelf toevoegen met hun naam en klas.
         </p>
       ) : (
         <>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-            <span className="text-neutral-500">{klaar} van {leerlingen.length} ingeschreven</span>
+            <span className="text-zand-500">{klaar} van {leerlingen.length} ingeschreven</span>
             <select className="veld w-auto" value={filter} onChange={(e) => setFilter(e.target.value)}>
               <option value="alle">Alle klassen</option>
               <option value="open">Nog niet ingeschreven</option>

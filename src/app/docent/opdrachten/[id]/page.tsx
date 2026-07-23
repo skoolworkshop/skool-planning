@@ -30,16 +30,16 @@ export default async function OpdrachtDetailDocent({ params }: { params: { id: s
   const toegewezen = s.positions.some((p) => p.assignments.some((a) => a.teacherId === t.id && !a.uitgevallen));
   const km = afstandKm(t, s.location ?? undefined);
   const openPositie = s.positions.find(
-    (p) => p.gepubliceerd && !p.gesloten && p.aantal > p.assignments.filter((a) => !a.reserve && !a.uitgevallen).length
+    (p) => p.gepubliceerd && !p.gesloten && p.aantal > p.assignments.filter((a) => !a.uitgevallen).length
   );
   const eigenReactie = s.positions.flatMap((p) => p.applications)[0];
 
   return (
     <>
-      <Link href="/docent/opdrachten" className="mb-3 inline-block text-sm text-neutral-500">← Terug</Link>
+      <Link href="/docent/opdrachten" className="mb-3 inline-block text-sm text-zand-500">← Terug</Link>
 
       <h1 className="text-xl font-bold">{s.workshop.naam}</h1>
-      <p className="mb-4 text-sm text-neutral-500">{datumLang(s.datum)}, {s.startTijd} tot {s.eindTijd}</p>
+      <p className="mb-4 text-sm text-zand-500">{datumLang(s.datum)}, {s.startTijd} tot {s.eindTijd}</p>
 
       {s.status === "GEANNULEERD" && <div className="mb-4"><Melding soort="fout">Deze opdracht is geannuleerd.</Melding></div>}
       {eigenReactie && (
@@ -69,9 +69,9 @@ export default async function OpdrachtDetailDocent({ params }: { params: { id: s
           <Rij label="Kleding">{s.kleding}</Rij>
           <Rij label="Bijzonderheden">{s.bijzonderheden}</Rij>
           {s.workshop.docentInstructie && (
-            <div className="mt-3 rounded-lg bg-neutral-50 p-3 text-sm">
+            <div className="mt-3 rounded-lg bg-zand-100 p-3 text-sm">
               <div className="mb-1 font-medium">Instructie voor de workshopdocent</div>
-              <p className="whitespace-pre-line text-neutral-700">{s.workshop.docentInstructie}</p>
+              <p className="whitespace-pre-line text-zand-600">{s.workshop.docentInstructie}</p>
             </div>
           )}
         </Kaart>
@@ -81,7 +81,7 @@ export default async function OpdrachtDetailDocent({ params }: { params: { id: s
             <h2 className="mb-2 font-semibold">Rondes</h2>
             <ul className="text-sm">
               {s.rounds.map((r) => (
-                <li key={r.id} className="flex justify-between border-b border-neutral-100 py-2 last:border-0">
+                <li key={r.id} className="flex justify-between border-b border-zand-200 py-2 last:border-0">
                   <span className="font-medium">Ronde {r.nummer} {r.groep ? `· ${r.groep}` : ""}</span>
                   <span>{r.startTijd} tot {r.eindTijd}</span>
                 </li>
@@ -116,7 +116,7 @@ export default async function OpdrachtDetailDocent({ params }: { params: { id: s
             <>
               <Rij label="Plaats">{s.location?.plaats}</Rij>
               <Rij label="Afstand">{km !== null ? `ongeveer ${km} km, ${reistijdMin(km)} minuten` : "Onbekend"}</Rij>
-              <p className="mt-2 text-xs text-neutral-500">
+              <p className="mt-2 text-xs text-zand-500">
                 Het volledige adres en de contactgegevens zie je zodra je bent ingepland.
               </p>
             </>

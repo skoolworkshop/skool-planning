@@ -25,7 +25,7 @@ export default function Indienen({ compleet }: { compleet: boolean }) {
   return (
     <Kaart>
       <h2 className="font-semibold">Profiel indienen</h2>
-      <p className="mt-1 text-sm text-neutral-500">
+      <p className="mt-1 text-sm text-zand-500">
         Klaar met invullen? Dien je profiel in. Na goedkeuring kun je je aanmelden voor opdrachten.
       </p>
       {!compleet && (

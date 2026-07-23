@@ -37,11 +37,11 @@ export default function NaamFormulier({
   return (
     <div>
       <h1 className="text-2xl font-bold">{titel}</h1>
-      {welkomtekst && <p className="mt-2 text-neutral-600">{welkomtekst}</p>}
+      {welkomtekst && <p className="mt-2 text-zand-600">{welkomtekst}</p>}
 
       {!handmatig ? (
         <>
-          <p className="mt-4 text-neutral-600">Wie ben jij?</p>
+          <p className="mt-4 text-zand-600">Wie ben jij?</p>
           <input
             className="veld mt-3"
             placeholder="Zoek je naam"
@@ -57,11 +57,11 @@ export default function NaamFormulier({
                 className="kaart flex w-full items-center justify-between p-4 text-left hover:border-skool-300"
               >
                 <span className="font-medium">{l.naam}</span>
-                {l.klaar && <span className="text-sm text-neutral-400">al ingeschreven</span>}
+                {l.klaar && <span className="text-sm text-zand-400">al ingeschreven</span>}
               </button>
             ))}
             {zichtbaar.length === 0 && (
-              <p className="text-sm text-neutral-500">Geen naam gevonden.</p>
+              <p className="text-sm text-zand-500">Geen naam gevonden.</p>
             )}
           </div>
           <button className="knop-ghost mt-4 w-full" onClick={() => setHandmatig(true)}>

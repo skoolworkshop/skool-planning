@@ -4,11 +4,13 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Rij } from "@/components/ui";
 import { klantGegevensOpslaan } from "@/lib/opdracht-acties";
+import { DOELGROEPEN, doelgroepenLabel } from "@/lib/doelgroepen";
 
 type Props = {
   clientId: string;
   onderwijs: boolean;
-  doelgroep: string;
+  doelgroepen: string[];
+  doelgroepToelichting: string;
   cjpNummer: string;
   factuurAdres: string;
   factuurEmail: string;
@@ -29,7 +31,7 @@ export default function Klantgegevens(p: Props) {
           <h2 className="font-semibold">Klantgegevens</h2>
           <button type="button" onClick={() => setOpen(true)} className="knop knop-ghost px-2 py-1 text-xs">Bewerken</button>
         </div>
-        <Rij label="Doelgroep">{p.doelgroep}</Rij>
+        <Rij label="Doelgroepen">{doelgroepenLabel(p.doelgroepen as never)}{p.doelgroepToelichting ? ` (${p.doelgroepToelichting})` : ""}</Rij>
         {p.onderwijs && <Rij label="CJP schoolnummer">{p.cjpNummer}</Rij>}
         <Rij label="Factuuradres">{p.factuurAdres}</Rij>
         <Rij label="Factuur e-mail">{p.factuurEmail}</Rij>
@@ -54,9 +56,20 @@ export default function Klantgegevens(p: Props) {
           });
         }}
       >
+        <fieldset>
+          <legend className="label">Doelgroepen</legend>
+          <div className="flex flex-wrap gap-2">
+            {DOELGROEPEN.map((d) => (
+              <label key={d.waarde} className="flex cursor-pointer items-center gap-2 rounded-full border border-zand-300 px-3 py-1.5 text-sm has-[:checked]:border-skool-400 has-[:checked]:bg-skool-50">
+                <input type="checkbox" name="doelgroepen" value={d.waarde} defaultChecked={p.doelgroepen.includes(d.waarde)} className="accent-skool-500" />
+                {d.label}
+              </label>
+            ))}
+          </div>
+        </fieldset>
         <div>
-          <label className="label" htmlFor="doelgroep">Doelgroep</label>
-          <input id="doelgroep" name="doelgroep" defaultValue={p.doelgroep} className="veld" />
+          <label className="label" htmlFor="dgtoel">Toelichting bij Overig</label>
+          <input id="dgtoel" name="doelgroepToelichting" defaultValue={p.doelgroepToelichting} placeholder="Alleen invullen als je Overig kiest" className="veld" />
         </div>
 
         {p.onderwijs && (

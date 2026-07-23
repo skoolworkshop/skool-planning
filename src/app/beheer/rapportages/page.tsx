@@ -39,7 +39,7 @@ export default async function RapportagesPagina({ searchParams }: { searchParams
   const totaleOmzet = projecten.reduce((n, p) => n + Number(p.omzet), 0);
   const totaleKosten = declaraties.reduce((n, d) => n + Number(d.totaal), 0);
   const geannuleerd = sessies.filter((s) => s.status === "GEANNULEERD").length;
-  const openPosities = sessies.reduce((n, s) => n + s.positions.reduce((m, p) => m + Math.max(0, p.aantal - p.assignments.filter((a) => !a.reserve).length), 0), 0);
+  const openPosities = sessies.reduce((n, s) => n + s.positions.reduce((m, p) => m + Math.max(0, p.aantal - p.assignments.filter((a) => !a.uitgevallen).length), 0), 0);
   const kilometers = declaraties.reduce((n, d) => n + d.kilometers, 0);
 
   const top = (m: Map<string, number>, n = 8) => [...m.entries()].sort((a, b) => b[1] - a[1]).slice(0, n);
@@ -69,27 +69,27 @@ export default async function RapportagesPagina({ searchParams }: { searchParams
           <h2 className="mb-3 font-semibold">Omzet per klant</h2>
           <ul className="space-y-1 text-sm">
             {top(omzetPerKlant).map(([k, v]) => (
-              <li key={k} className="flex justify-between border-b border-neutral-100 py-1.5"><span>{k}</span><span className="font-medium">{euro(v)}</span></li>
+              <li key={k} className="flex justify-between border-b border-zand-200 py-1.5"><span>{k}</span><span className="font-medium">{euro(v)}</span></li>
             ))}
-            {omzetPerKlant.size === 0 && <li className="text-neutral-500">Geen gegevens in deze periode.</li>}
+            {omzetPerKlant.size === 0 && <li className="text-zand-500">Geen gegevens in deze periode.</li>}
           </ul>
         </Kaart>
         <Kaart>
           <h2 className="mb-3 font-semibold">Meest geboekte workshops</h2>
           <ul className="space-y-1 text-sm">
             {top(perWorkshop).map(([k, v]) => (
-              <li key={k} className="flex justify-between border-b border-neutral-100 py-1.5"><span>{k}</span><span className="font-medium">{v}x</span></li>
+              <li key={k} className="flex justify-between border-b border-zand-200 py-1.5"><span>{k}</span><span className="font-medium">{v}x</span></li>
             ))}
-            {perWorkshop.size === 0 && <li className="text-neutral-500">Geen gegevens in deze periode.</li>}
+            {perWorkshop.size === 0 && <li className="text-zand-500">Geen gegevens in deze periode.</li>}
           </ul>
         </Kaart>
         <Kaart>
           <h2 className="mb-3 font-semibold">Kosten per docent</h2>
           <ul className="space-y-1 text-sm">
             {top(kostenPerDocent).map(([k, v]) => (
-              <li key={k} className="flex justify-between border-b border-neutral-100 py-1.5"><span>{k}</span><span className="font-medium">{euro(v)}</span></li>
+              <li key={k} className="flex justify-between border-b border-zand-200 py-1.5"><span>{k}</span><span className="font-medium">{euro(v)}</span></li>
             ))}
-            {kostenPerDocent.size === 0 && <li className="text-neutral-500">Nog geen declaraties.</li>}
+            {kostenPerDocent.size === 0 && <li className="text-zand-500">Nog geen declaraties.</li>}
           </ul>
         </Kaart>
       </div>

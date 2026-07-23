@@ -12,7 +12,7 @@ export default function LoginPagina() {
           <div className="mt-1 text-sm text-zand-500">Planningsysteem</div>
         </div>
         <LoginForm />
-        <p className="mt-6 text-center text-xs text-neutral-400">
+        <p className="mt-6 text-center text-xs text-zand-400">
           Nog geen account? Vraag een uitnodiging aan via je planner of{" "}
           <a href="/registreren" className="font-medium text-skool-600 underline">
             meld je hier aan

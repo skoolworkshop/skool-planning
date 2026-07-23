@@ -7,8 +7,8 @@ export const dynamic = "force-dynamic";
 
 const ITEMS: NavItem[] = [
   { href: "/docent", label: "Home", icoon: "🏠" },
-  { href: "/docent/opdrachten", label: "Opdrachten", icoon: "🔎" },
-  { href: "/docent/mijn", label: "Mijn werk", icoon: "📌" },
+  { href: "/docent/opdrachten", label: "Open opdrachten", icoon: "🔎" },
+  { href: "/docent/mijn", label: "Mijn opdrachten", icoon: "📌" },
   { href: "/docent/meldingen", label: "Meldingen", icoon: "🔔" },
   { href: "/docent/profiel", label: "Profiel", icoon: "👤" },
 ];

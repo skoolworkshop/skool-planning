@@ -44,10 +44,10 @@ export default async function KlantenPagina({ searchParams }: { searchParams: { 
             </thead>
             <tbody>
               {klanten.map((k) => (
-                <tr key={k.id} className="hover:bg-neutral-50">
+                <tr key={k.id} className="hover:bg-zand-100">
                   <td>
                     <Link href={`/beheer/klanten/${k.id}`} className="font-medium hover:text-skool-600">{k.naam}</Link>
-                    <div className="text-xs text-neutral-500">{k.klantnummer} · {k.locations[0]?.plaats ?? ""}</div>
+                    <div className="text-xs text-zand-500">{k.klantnummer} · {k.locations[0]?.plaats ?? ""}</div>
                   </td>
                   <td className="hidden sm:table-cell"><Badge kleur="grijs">{label(k.type)}</Badge></td>
                   <td className="hidden md:table-cell">{k.locations.length}</td>

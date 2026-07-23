@@ -60,8 +60,8 @@ export default async function InschrijvingenPagina() {
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="font-semibold">{e.titel}</div>
-                    <div className="text-sm text-neutral-500">{e.project.client.naam}</div>
-                    <div className="text-sm text-neutral-500">
+                    <div className="text-sm text-zand-500">{e.project.client.naam}</div>
+                    <div className="text-sm text-zand-500">
                       {e.project.startDatum ? datum(e.project.startDatum) : "Geen datum"} · {e.rondes.length} rondes · {plekken} plekken
                     </div>
                   </div>
@@ -69,11 +69,11 @@ export default async function InschrijvingenPagina() {
                 </div>
 
                 <div className="mt-3">
-                  <div className="flex justify-between text-xs text-neutral-500">
+                  <div className="flex justify-between text-xs text-zand-500">
                     <span>{klaar} van {totaal} leerlingen ingeschreven</span>
                     <span>{pct}%</span>
                   </div>
-                  <div className="mt-1 h-2 overflow-hidden rounded-full bg-neutral-100">
+                  <div className="mt-1 h-2 overflow-hidden rounded-full bg-zand-100">
                     <div className="h-full rounded-full bg-skool-500 transition-all" style={{ width: `${pct}%` }} />
                   </div>
                 </div>

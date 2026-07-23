@@ -126,7 +126,7 @@ export default async function InschrijvingPagina({ params }: { params: { id: str
 
         <Kaart>
           <h2 className="font-semibold">Downloads</h2>
-          <p className="mt-1 text-sm text-neutral-500">
+          <p className="mt-1 text-sm text-zand-500">
             Alles wat de school en de workshopdocenten op de dag zelf nodig hebben.
           </p>
           <div className="mt-3 space-y-3">
@@ -138,7 +138,7 @@ export default async function InschrijvingPagina({ params }: { params: { id: str
               ["docenten", "Docentenrooster"],
               ["materiaal", "Materiaaloverzicht"],
             ] as const).map(([soort, titel]) => (
-              <div key={soort} className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 px-3 py-2">
+              <div key={soort} className="flex items-center justify-between gap-3 rounded-lg border border-zand-200 px-3 py-2">
                 <span className="text-sm font-medium">{titel}</span>
                 <span className="flex gap-2">
                   <Link className="knop-secundair" href={`/beheer/inschrijvingen/${e.id}/print/${soort}`} target="_blank">
@@ -156,7 +156,7 @@ export default async function InschrijvingPagina({ params }: { params: { id: str
           <div className="mt-2 space-y-2 text-sm">
             <Rij titel="Inschrijflink voor leerlingen" waarde="/inschrijven" />
             {schoolcode && <Rij titel="Code voor de contactpersoon" waarde={schoolcode.code} />}
-            <p className="text-neutral-500">
+            <p className="text-zand-500">
               De contactpersoon van de school volgt hiermee de voortgang en ziet wie zich nog niet heeft ingeschreven.
             </p>
           </div>
@@ -170,8 +170,8 @@ export default async function InschrijvingPagina({ params }: { params: { id: str
 
 function Rij({ titel, waarde }: { titel: string; waarde: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-lg border border-neutral-200 px-3 py-2">
-      <span className="text-neutral-500">{titel}</span>
+    <div className="flex items-center justify-between gap-3 rounded-lg border border-zand-200 px-3 py-2">
+      <span className="text-zand-500">{titel}</span>
       <span className="font-mono font-semibold">{waarde}</span>
     </div>
   );

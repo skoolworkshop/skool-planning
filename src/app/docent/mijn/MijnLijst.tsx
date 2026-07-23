@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { Kaart, Badge, statusKleur, Leeg } from "@/components/ui";
 import { label } from "@/lib/format";
-import { uitnodigingBeantwoorden, aanmeldingIntrekken, opdrachtBevestigen, werkregistratieIndienen } from "@/lib/docent-acties";
+import { uitnodigingBeantwoorden, aanmeldingIntrekken, werkregistratieIndienen } from "@/lib/docent-acties";
 
 type Uitnodiging = { id: string; workshop: string; klant: string; plaats: string; datum: string; tijd: string; vergoeding: string; deadline: string | null; sessionId: string };
 type Aanmelding = Omit<Uitnodiging, "deadline"> & { status: string };
@@ -12,7 +12,7 @@ type Opdracht = {
   id: string; groep: string; workshop: string; klant: string; adres: string; plaats: string; datum: string; tijd: string;
   aanwezigVanaf: string | null; startTijd: string; eindTijd: string; rondes: string[]; contact: string | null; telefoon: string | null;
   deelnemers: number; doelgroep: string | null; benodigdheden: string | null; kleding: string | null; bijzonderheden: string | null;
-  vergoeding: string; bevestigd: boolean; declaratieStatus: string | null; declaratieTotaal: string | null; sessionId: string;
+  vergoeding: string; declaratieStatus: string | null; declaratieTotaal: string | null; sessionId: string;
 };
 
 export default function MijnLijst({
@@ -43,8 +43,8 @@ export default function MijnLijst({
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <div className="font-semibold">{x.workshop}</div>
-                  <div className="text-sm text-neutral-600">{x.datum} · {x.tijd}</div>
-                  <div className="text-sm text-neutral-500">{x.klant}, {x.plaats}</div>
+                  <div className="text-sm text-zand-600">{x.datum} · {x.tijd}</div>
+                  <div className="text-sm text-zand-500">{x.klant}, {x.plaats}</div>
                 </div>
                 <div className="text-right font-bold text-skool-600">{x.vergoeding}</div>
               </div>
@@ -72,8 +72,8 @@ export default function MijnLijst({
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <div className="font-semibold">{x.workshop}</div>
-                  <div className="text-sm text-neutral-600">{x.datum} · {x.tijd}</div>
-                  <div className="text-sm text-neutral-500">{x.klant}, {x.plaats}</div>
+                  <div className="text-sm text-zand-600">{x.datum} · {x.tijd}</div>
+                  <div className="text-sm text-zand-500">{x.klant}, {x.plaats}</div>
                 </div>
                 <div className="text-right">
                   <div className="font-bold text-skool-600">{x.vergoeding}</div>
@@ -112,27 +112,26 @@ export default function MijnLijst({
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <div className="font-semibold">{o.workshop}</div>
-                  <div className="text-sm text-neutral-600">{o.datum} · {o.tijd}</div>
-                  <div className="text-sm text-neutral-500">{o.klant}, {o.plaats}</div>
+                  <div className="text-sm text-zand-600">{o.datum} · {o.tijd}</div>
+                  <div className="text-sm text-zand-500">{o.klant}, {o.plaats}</div>
                 </div>
                 <div className="text-right">
                   <div className="font-bold text-skool-600">{o.vergoeding}</div>
                   {o.declaratieStatus && <Badge kleur={statusKleur(o.declaratieStatus)}>{label(o.declaratieStatus)}</Badge>}
-                  {!o.declaratieStatus && !o.bevestigd && <Badge kleur="geel">Bevestigen</Badge>}
                 </div>
               </div>
             </button>
 
             {open === o.id && (
-              <div className="mt-3 space-y-2 border-t border-neutral-100 pt-3 text-sm">
-                {o.aanwezigVanaf && <p><span className="text-neutral-500">Aanwezig vanaf</span> {o.aanwezigVanaf}</p>}
-                {o.rondes.length > 0 && <p className="text-neutral-600">{o.rondes.join(" · ")}</p>}
-                <p><span className="text-neutral-500">Adres</span> {o.adres}</p>
-                {o.contact && <p><span className="text-neutral-500">Contact</span> {o.contact}</p>}
-                {o.deelnemers > 0 && <p><span className="text-neutral-500">Deelnemers</span> {o.deelnemers} {o.doelgroep ? `· ${o.doelgroep}` : ""}</p>}
-                {o.benodigdheden && <p><span className="text-neutral-500">Benodigdheden</span> {o.benodigdheden}</p>}
-                {o.kleding && <p><span className="text-neutral-500">Kleding</span> {o.kleding}</p>}
-                {o.bijzonderheden && <p className="rounded bg-neutral-50 p-2">{o.bijzonderheden}</p>}
+              <div className="mt-3 space-y-2 border-t border-zand-200 pt-3 text-sm">
+                {o.aanwezigVanaf && <p><span className="text-zand-500">Aanwezig vanaf</span> {o.aanwezigVanaf}</p>}
+                {o.rondes.length > 0 && <p className="text-zand-600">{o.rondes.join(" · ")}</p>}
+                <p><span className="text-zand-500">Adres</span> {o.adres}</p>
+                {o.contact && <p><span className="text-zand-500">Contact</span> {o.contact}</p>}
+                {o.deelnemers > 0 && <p><span className="text-zand-500">Deelnemers</span> {o.deelnemers} {o.doelgroep ? `· ${o.doelgroep}` : ""}</p>}
+                {o.benodigdheden && <p><span className="text-zand-500">Benodigdheden</span> {o.benodigdheden}</p>}
+                {o.kleding && <p><span className="text-zand-500">Kleding</span> {o.kleding}</p>}
+                {o.bijzonderheden && <p className="rounded bg-zand-100 p-2">{o.bijzonderheden}</p>}
 
                 <div className="flex flex-wrap gap-2 pt-2">
                   {o.adres && (
@@ -144,15 +143,12 @@ export default function MijnLijst({
                   {o.telefoon && <a className="knop-secundair" href={`tel:${o.telefoon.replace(/\s/g, "")}`}>Bellen</a>}
                   {o.telefoon && <a className="knop-secundair" target="_blank" rel="noreferrer" href={`https://wa.me/${o.telefoon.replace(/[^0-9]/g, "")}`}>WhatsApp</a>}
                   <a className="knop-secundair" href={`/api/ics/${o.sessionId}`}>Agenda</a>
-                  {!o.bevestigd && o.groep === "komend" && (
-                    <button className="knop-primair" disabled={bezig} onClick={() => doe(() => opdrachtBevestigen(o.id))}>Opdracht bevestigen</button>
-                  )}
                 </div>
               </div>
             )}
 
             {o.groep === "afronden" && (
-              <div className="mt-3 border-t border-neutral-100 pt-3">
+              <div className="mt-3 border-t border-zand-200 pt-3">
                 {declaratieVoor === o.id ? (
                   <form
                     action={(fd) => doe(() => werkregistratieIndienen(o.id, fd))}
@@ -178,7 +174,7 @@ export default function MijnLijst({
             )}
 
             {o.groep === "afgerond" && o.declaratieTotaal && (
-              <p className="mt-2 border-t border-neutral-100 pt-2 text-sm text-neutral-600">
+              <p className="mt-2 border-t border-zand-200 pt-2 text-sm text-zand-600">
                 Ingediend totaal: <span className="font-semibold">{o.declaratieTotaal}</span>
               </p>
             )}

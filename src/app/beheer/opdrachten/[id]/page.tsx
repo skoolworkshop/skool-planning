@@ -2,152 +2,184 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { vereisGebruiker } from "@/lib/auth";
-import { matchDocenten } from "@/lib/matching";
-import { Kaart, PaginaKop, Badge, statusKleur, Rij, Melding } from "@/components/ui";
-import { datum, datumLang, euro, label } from "@/lib/format";
-import PositiePaneel from "./PositiePaneel";
-import SessieActies from "./SessieActies";
+import { Kaart, PaginaKop, Badge, statusKleur, Rij } from "@/components/ui";
+import { datum, euro, label } from "@/lib/format";
+import { bouwAlleTijdschemas, bouwBevestiging, samenvatting, type BevSessie } from "@/lib/bevestiging";
+import Rondes from "./Rondes";
+import Bevestiging from "./Bevestiging";
 
 export const dynamic = "force-dynamic";
 
-export default async function OpdrachtDetail({ params }: { params: { id: string } }) {
-  const u = await vereisGebruiker();
-  const s = await db.workshopSession.findUnique({
+export default async function ProjectDetail({ params }: { params: { id: string } }) {
+  await vereisGebruiker();
+  const p = await db.project.findUnique({
     where: { id: params.id },
     include: {
-      workshop: true,
+      client: true,
       location: true,
-      contact: true,
-      rounds: { orderBy: { nummer: "asc" } },
-      project: { include: { client: true } },
-      positions: {
+      sessions: {
+        orderBy: [{ datum: "asc" }, { startTijd: "asc" }],
         include: {
-          assignments: { include: { teacher: { include: { user: { select: { email: true } } } } } },
-          applications: { include: { teacher: true }, orderBy: { createdAt: "asc" } },
+          workshop: true,
+          contact: true,
+          rounds: { orderBy: [{ nummer: "asc" }, { startTijd: "asc" }] },
+          positions: { include: { assignments: true } },
         },
       },
     },
   });
-  if (!s) notFound();
+  if (!p) notFound();
 
-  const matches = await Promise.all(
-    s.positions.map(async (p) => ({ positionId: p.id, lijst: (await matchDocenten(p.id)).slice(0, 8) }))
-  );
+  const alleWorkshops = await db.workshop.findMany({
+    where: { actief: true },
+    orderBy: { naam: "asc" },
+    select: { id: true, naam: true },
+  });
 
-  const nodig = s.positions.reduce((n, p) => n + p.aantal, 0);
-  const bezet = s.positions.reduce((n, p) => n + p.assignments.filter((a) => !a.reserve && !a.uitgevallen).length, 0);
-  const magPlannen = u.role === "SUPERBEHEERDER" || u.role === "PLANNER";
+  const docentkosten = p.sessions.flatMap((s) => s.positions).reduce((n, x) => n + Number(x.vergoeding) * x.aantal, 0);
+  const marge = Number(p.omzet) - docentkosten - Number(p.materiaalkosten);
+
+  // Gegevens voor het tijdschema en de bevestigingsmail
+  const bevSessies: BevSessie[] = p.sessions.map((s) => ({
+    workshopNaam: s.workshop.naam,
+    aanwezigVanaf: s.aanwezigVanaf,
+    afbouwTot: s.afbouwTot,
+    klantBenodigdheden: s.benodigdheden || s.workshop.klantBenodigdheden,
+    voorbeeldLink: s.workshop.voorbeeldLink,
+    rondes: s.rounds.map((r) => ({
+      nummer: r.nummer,
+      startTijd: r.startTijd,
+      eindTijd: r.eindTijd,
+      afdeling: r.afdeling,
+      aantalGroepen: r.aantalGroepen,
+    })),
+  }));
+
+  const datums = [...new Set(p.sessions.map((s) => datum(s.datum)))];
+  const datumTekst = datums.length === 0 ? datum(p.startDatum) : datums.length === 1 ? datums[0] : "meerdere data";
+  const contact = p.sessions.find((s) => s.contact)?.contact ?? null;
+
+  const schemas = bouwAlleTijdschemas(bevSessies);
+  const tekst = bouwBevestiging({
+    aanhef: contact?.naam?.split(" ")[0] ?? null,
+    klantNaam: p.client.naam,
+    datumTekst,
+    locatieNaam: p.location?.naam ?? p.client.naam,
+    adresregels: p.location
+      ? [[p.location.straat, p.location.huisnummer].filter(Boolean).join(" "), `${p.location.postcode ?? ""} ${p.location.plaats}`.trim()]
+      : [],
+    contactNaam: contact?.naam ?? null,
+    contactTelefoon: contact?.mobiel ?? contact?.telefoon ?? null,
+    aantalPersonenTekst: p.aantalPersonenTekst,
+    sessies: bevSessies,
+  });
 
   return (
     <>
-      <Link href="/beheer/opdrachten" className="mb-3 inline-block text-sm text-neutral-500 hover:text-skool-600">← Terug naar opdrachten</Link>
+      <Link href="/beheer/opdrachten" className="mb-3 inline-block text-sm text-zand-500 hover:text-skool-600">← Terug naar projecten</Link>
       <PaginaKop
-        titel={s.workshop.naam}
-        sub={`${datumLang(s.datum)}, ${s.startTijd} tot ${s.eindTijd} bij ${s.project.client.naam}`}
-        actie={
-          <div className="flex items-center gap-2">
-            <Badge kleur={bezet >= nodig ? "groen" : bezet > 0 ? "geel" : "rood"}>{bezet} van {nodig} bezet</Badge>
-            <Badge kleur={statusKleur(s.status)}>{label(s.status)}</Badge>
-          </div>
-        }
+        titel={p.naam}
+        sub={`${p.ordernummer} · ${p.client.naam} · ${samenvatting(bevSessies)}`}
+        actie={<Badge kleur={statusKleur(p.status)}>{label(p.status)}</Badge>}
       />
-
-      {s.status === "GEANNULEERD" && (
-        <div className="mb-4"><Melding soort="fout">Deze opdracht is geannuleerd.</Melding></div>
-      )}
 
       <div className="grid gap-5 lg:grid-cols-3">
         <div className="space-y-5 lg:col-span-2">
-          {s.positions.map((p) => (
-            <PositiePaneel
-              key={p.id}
-              positie={{
-                id: p.id,
-                rol: p.rol,
-                aantal: p.aantal,
-                vergoeding: Number(p.vergoeding),
-                gepubliceerd: p.gepubliceerd,
-                gesloten: p.gesloten,
-              }}
-              magPlannen={magPlannen}
-              toewijzingen={p.assignments.map((a) => ({
-                id: a.id,
-                naam: [a.teacher.voornaam, a.teacher.tussenvoegsel, a.teacher.achternaam].filter(Boolean).join(" "),
-                email: a.teacher.user.email,
-                telefoon: a.teacher.telefoon,
-                reserve: a.reserve,
-                bevestigd: a.bevestigd,
-                uitgevallen: a.uitgevallen,
-              }))}
-              aanmeldingen={p.applications.map((a) => ({
-                id: a.id,
-                teacherId: a.teacherId,
-                naam: [a.teacher.voornaam, a.teacher.tussenvoegsel, a.teacher.achternaam].filter(Boolean).join(" "),
-                soort: a.soort,
-                status: a.status,
-                motivatie: a.motivatie,
-                deadline: a.reactieDeadline ? datum(a.reactieDeadline) : null,
-              }))}
-              matches={matches.find((m) => m.positionId === p.id)?.lijst ?? []}
-            />
-          ))}
-          {s.positions.length === 0 && (
-            <Kaart><p className="text-sm text-neutral-500">Er zijn nog geen workshopdocentposities aangemaakt voor deze opdracht.</p></Kaart>
-          )}
-        </div>
-
-        <div className="space-y-5">
           <Kaart>
-            <h2 className="mb-2 font-semibold">Opdrachtgegevens</h2>
-            <Rij label="Project">
-              <Link href={`/beheer/projecten/${s.projectId}`} className="text-skool-600 hover:underline">{s.project.naam}</Link>
-            </Rij>
-            <Rij label="Ordernummer">{s.project.ordernummer}</Rij>
-            <Rij label="Klant">{s.project.client.naam}</Rij>
-            <Rij label="Locatie">
-              {s.location ? `${s.location.naam}, ${[s.location.straat, s.location.huisnummer].filter(Boolean).join(" ")}, ${s.location.plaats}` : ""}
-            </Rij>
-            <Rij label="Ruimte">{s.ruimte}</Rij>
-            <Rij label="Aanwezig vanaf">{s.aanwezigVanaf}</Rij>
-            <Rij label="Deelnemers">{s.deelnemers > 0 ? `${s.deelnemers}, ${s.leeftijd ?? ""}` : ""}</Rij>
-            <Rij label="Doelgroep">{s.doelgroep}</Rij>
-            <Rij label="Vergoeding">{euro(s.vergoeding)}</Rij>
-            <Rij label="Reiskosten">{s.reiskosten}</Rij>
-            <Rij label="Aanmelddeadline">{s.aanmeldDeadline ? datum(s.aanmeldDeadline) : ""}</Rij>
+            <h2 className="mb-3 font-semibold">Workshops in deze opdracht</h2>
+            <ul className="space-y-4">
+              {p.sessions.map((s) => {
+                const nodig = s.positions.reduce((n, x) => n + x.aantal, 0);
+                const bezet = s.positions.reduce((n, x) => n + x.assignments.filter((a) => !a.uitgevallen).length, 0);
+                const groepen = s.rounds.reduce((n, r) => n + Math.max(1, r.aantalGroepen), 0);
+                return (
+                  <li key={s.id} className="border-b border-zand-200 pb-4 last:border-0 last:pb-0">
+                    <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                      <Link href={`/beheer/opdrachten/moment/${s.id}`} className="font-medium hover:text-skool-600">{s.workshop.naam}</Link>
+                      <span className="text-sm text-zand-500">{datum(s.datum)} · {s.startTijd} tot {s.eindTijd}</span>
+                      <span className="text-xs text-zand-500">{s.rounds.length} rondes, {groepen} groepen</span>
+                      <Badge kleur={bezet >= nodig ? "groen" : bezet > 0 ? "geel" : "rood"}>{bezet} van {nodig} workshopdocenten</Badge>
+                      <Badge kleur={statusKleur(s.status)}>{label(s.status)}</Badge>
+                    </div>
+                    <Rondes
+                      sessionId={s.id}
+                      workshopNaam={s.workshop.naam}
+                      aanwezigVanaf={s.aanwezigVanaf ?? ""}
+                      afbouwTot={s.afbouwTot ?? ""}
+                      standaardDuur={s.workshop.standaardDuur}
+                      rondes={s.rounds.map((r) => ({
+                        nummer: r.nummer,
+                        startTijd: r.startTijd,
+                        eindTijd: r.eindTijd,
+                        afdeling: r.afdeling ?? undefined,
+                        aantalGroepen: r.aantalGroepen,
+                        deelnemers: r.deelnemers,
+                      }))}
+                    />
+                  </li>
+                );
+              })}
+              {p.sessions.length === 0 && <li className="text-sm text-zand-500">Nog geen workshops in deze opdracht.</li>}
+            </ul>
           </Kaart>
 
-          {s.rounds.length > 0 && (
+          {schemas.length > 0 && (
             <Kaart>
-              <h2 className="mb-2 font-semibold">Rondes</h2>
-              <ul className="space-y-1 text-sm">
-                {s.rounds.map((r) => (
-                  <li key={r.id} className="flex justify-between border-b border-neutral-100 py-1.5 last:border-0">
-                    <span className="font-medium">Ronde {r.nummer}</span>
-                    <span>{r.startTijd} tot {r.eindTijd}</span>
-                    <span className="text-neutral-500">{r.groep ?? ""} {r.deelnemers > 0 ? `· ${r.deelnemers}` : ""}</span>
-                  </li>
+              <h2 className="mb-3 font-semibold">Tijdschema</h2>
+              <div className="grid gap-4 sm:grid-cols-2">
+                {schemas.map((s) => (
+                  <div key={s.afdeling ?? "algemeen"}>
+                    {s.afdeling && <h3 className="mb-1 text-sm font-semibold text-skool-600">{s.afdeling}</h3>}
+                    <ul className="space-y-1 text-sm">
+                      {s.regels.map((r, i) => (
+                        <li key={i} className={r.includes("Workshopronde") ? "font-medium" : "text-zand-600"}>{r}</li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
             </Kaart>
           )}
 
           <Kaart>
-            <h2 className="mb-2 font-semibold">Contact op de dag</h2>
-            <Rij label="Naam">{s.contact?.naam}</Rij>
-            <Rij label="Telefoon">{s.telefoonOpDeDag ?? s.contact?.mobiel ?? s.contact?.telefoon}</Rij>
-            <Rij label="E-mail">{s.contact?.email}</Rij>
-            <Rij label="Parkeren">{s.location?.parkeren}</Rij>
+            <h2 className="mb-3 font-semibold">Bevestiging naar de klant</h2>
+            <Bevestiging
+              projectId={p.id}
+              tekst={tekst}
+              aantalPersonenTekst={p.aantalPersonenTekst ?? ""}
+              workshops={alleWorkshops}
+            />
           </Kaart>
+        </div>
 
+        <div className="space-y-5">
           <Kaart>
-            <h2 className="mb-2 font-semibold">Praktisch</h2>
-            <Rij label="Benodigdheden">{s.benodigdheden}</Rij>
-            <Rij label="Kleding">{s.kleding}</Rij>
-            <Rij label="Bijzonderheden">{s.bijzonderheden}</Rij>
-            <Rij label="Veiligheid">{s.veiligheid}</Rij>
+            <h2 className="mb-2 font-semibold">Klant en locatie</h2>
+            <Rij label="Klant">
+              <Link href={`/beheer/klanten/${p.client.id}`} className="hover:text-skool-600">{p.client.naam}</Link>
+            </Rij>
+            <Rij label="Klanttype">{label(p.client.type)}</Rij>
+            {p.client.cjpNummer && <Rij label="CJP schoolnummer">{p.client.cjpNummer}</Rij>}
+            <Rij label="Locatie">{p.location ? `${p.location.naam}, ${p.location.plaats}` : ""}</Rij>
+            <Rij label="Contactpersoon">{contact ? `${contact.naam}${contact.mobiel ? `, ${contact.mobiel}` : ""}` : ""}</Rij>
+            <Rij label="Periode">{datum(p.startDatum)}{p.eindDatum && datum(p.eindDatum) !== datum(p.startDatum) ? ` tot ${datum(p.eindDatum)}` : ""}</Rij>
           </Kaart>
-
-          {magPlannen && s.status !== "GEANNULEERD" && <SessieActies sessionId={s.id} />}
+          <Kaart>
+            <h2 className="mb-2 font-semibold">Financieel</h2>
+            <Rij label="Omzet">{euro(p.omzet)}</Rij>
+            <Rij label="Verwachte kosten workshopdocenten">{euro(docentkosten)}</Rij>
+            <Rij label="Materiaalkosten">{euro(p.materiaalkosten)}</Rij>
+            <Rij label="Verwachte marge">
+              <span className={marge < 0 ? "text-red-700" : "text-emerald-700"}>{euro(marge)}</span>
+            </Rij>
+          </Kaart>
+          {(p.notitie || p.interneNotitie) && (
+            <Kaart>
+              <h2 className="mb-2 font-semibold">Notities</h2>
+              {p.notitie && <p className="whitespace-pre-line text-sm">{p.notitie}</p>}
+              {p.interneNotitie && <p className="mt-2 whitespace-pre-line rounded bg-zand-100 p-2 text-sm text-zand-600">Intern: {p.interneNotitie}</p>}
+            </Kaart>
+          )}
         </div>
       </div>
     </>

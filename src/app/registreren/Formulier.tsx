@@ -43,7 +43,7 @@ export default function Formulier() {
         <div>
           <label className="label" htmlFor="wachtwoord">Wachtwoord</label>
           <input id="wachtwoord" name="wachtwoord" type="password" className="veld" required minLength={10} autoComplete="new-password" />
-          <p className="mt-1 text-xs text-neutral-500">Minimaal 10 tekens.</p>
+          <p className="mt-1 text-xs text-zand-500">Minimaal 10 tekens.</p>
         </div>
         <label className="flex items-start gap-2 text-sm">
           <input type="checkbox" name="akkoord" className="mt-0.5 h-4 w-4 accent-skool-500" />

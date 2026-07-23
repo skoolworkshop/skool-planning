@@ -48,28 +48,28 @@ export default function Codes({
           </button>
         </div>
       </div>
-      <p className="mt-1 text-sm text-neutral-500">{uitleg}</p>
+      <p className="mt-1 text-sm text-zand-500">{uitleg}</p>
 
       {fout && <div className="mt-3"><Melding soort="fout">{fout}</Melding></div>}
 
       {codes.length === 0 ? (
-        <p className="mt-3 text-sm text-neutral-500">Nog geen codes. Voeg eerst leerlingen toe.</p>
+        <p className="mt-3 text-sm text-zand-500">Nog geen codes. Voeg eerst leerlingen toe.</p>
       ) : (
         <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {codes.slice(0, 60).map((c) => (
-            <div key={c.code} className="flex items-center justify-between rounded-lg border border-neutral-200 px-3 py-2">
-              <span className="text-sm text-neutral-500">{c.klas ?? "Hele school"}</span>
+            <div key={c.code} className="flex items-center justify-between rounded-lg border border-zand-200 px-3 py-2">
+              <span className="text-sm text-zand-500">{c.klas ?? "Hele school"}</span>
               <span className="font-mono text-lg font-semibold tracking-wider">{c.code}</span>
             </div>
           ))}
           {codes.length > 60 && (
-            <p className="text-sm text-neutral-500">En nog {codes.length - 60} codes. Gebruik Kopieer lijst.</p>
+            <p className="text-sm text-zand-500">En nog {codes.length - 60} codes. Gebruik Kopieer lijst.</p>
           )}
         </div>
       )}
 
       {schoolcode && (
-        <p className="mt-3 text-sm text-neutral-500">
+        <p className="mt-3 text-sm text-zand-500">
           Code voor het schoolportaal: <span className="font-mono font-semibold">{schoolcode}</span>
         </p>
       )}

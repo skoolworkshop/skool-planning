@@ -31,7 +31,7 @@ export default function Weekdagen({ actief }: { actief: number[] }) {
             disabled={bezig}
             onClick={() => wissel(d.n)}
             className={`h-11 w-11 rounded-full border text-sm font-medium uppercase transition ${
-              a ? "border-skool-400 bg-skool-500 text-white" : "border-neutral-300 text-neutral-600 hover:bg-neutral-50"
+              a ? "border-skool-400 bg-skool-500 text-white" : "border-zand-300 text-zand-600 hover:bg-zand-100"
             }`}
           >
             {d.k}

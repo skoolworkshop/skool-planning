@@ -9,12 +9,12 @@ export default function RegistrerenPagina() {
       <div className="mb-6">
         <div className="text-2xl font-bold tracking-tight">Skool Workshop</div>
         <h1 className="mt-4 text-xl font-bold">Aanmelden als docent</h1>
-        <p className="mt-1 text-sm text-neutral-500">
+        <p className="mt-1 text-sm text-zand-500">
           Maak een account aan, vul je profiel in en wij nemen contact op.
         </p>
       </div>
       <Formulier />
-      <p className="mt-6 text-center text-sm text-neutral-500">
+      <p className="mt-6 text-center text-sm text-zand-500">
         Heb je al een account? <Link href="/login" className="font-medium text-skool-600 hover:underline">Inloggen</Link>
       </p>
     </div>

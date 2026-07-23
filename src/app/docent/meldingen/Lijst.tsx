@@ -31,8 +31,8 @@ export default function Lijst({ items }: { items: Item[] }) {
               {!isGelezen && <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-skool-500" />}
               <div className="min-w-0">
                 <div className="font-semibold">{m.titel}</div>
-                <p className="mt-0.5 text-sm text-neutral-600">{m.tekst}</p>
-                <div className="mt-1 text-xs text-neutral-400">{datumTijd(m.wanneer)}</div>
+                <p className="mt-0.5 text-sm text-zand-600">{m.tekst}</p>
+                <div className="mt-1 text-xs text-zand-400">{datumTijd(m.wanneer)}</div>
               </div>
             </div>
           </div>

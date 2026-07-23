@@ -30,7 +30,7 @@ export default function Formulier({ token }: { token: string }) {
     return (
       <div className="kaart p-5 text-center">
         <p className="font-semibold">Gelukt</p>
-        <p className="mt-1 text-sm text-neutral-500">Je wachtwoord staat klaar. We sturen je door naar het inlogscherm.</p>
+        <p className="mt-1 text-sm text-zand-500">Je wachtwoord staat klaar. We sturen je door naar het inlogscherm.</p>
       </div>
     );
   }
@@ -38,7 +38,7 @@ export default function Formulier({ token }: { token: string }) {
   return (
     <form onSubmit={verzend} className="kaart space-y-4 p-5">
       <h1 className="text-lg font-bold">Wachtwoord instellen</h1>
-      <p className="text-sm text-neutral-500">Kies een wachtwoord van minimaal 10 tekens.</p>
+      <p className="text-sm text-zand-500">Kies een wachtwoord van minimaal 10 tekens.</p>
       <div>
         <label className="label" htmlFor="pw">Nieuw wachtwoord</label>
         <input id="pw" type="password" value={pw} onChange={(e) => setPw(e.target.value)} required minLength={10} className="veld" autoComplete="new-password" />

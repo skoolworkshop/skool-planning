@@ -59,7 +59,7 @@ export default async function OpenOpdrachten({ searchParams }: { searchParams: {
   const kaarten = posities
     .map((p) => {
       const km = afstandKm(t, p.session.location ?? undefined);
-      return { p, km, vrij: p.aantal - p.assignments.filter((a) => !a.reserve && !a.uitgevallen).length };
+      return { p, km, vrij: p.aantal - p.assignments.filter((a) => !a.uitgevallen).length };
     })
     .filter((x) => x.vrij > 0)
     // Buiten de eigen maximale reisafstand tonen we een opdracht niet
@@ -67,17 +67,17 @@ export default async function OpenOpdrachten({ searchParams }: { searchParams: {
     .filter((x) => (maxAfstand && x.km !== null ? x.km <= maxAfstand : true));
 
   const verborgen = posities
-    .map((p) => ({ km: afstandKm(t, p.session.location ?? undefined), vrij: p.aantal - p.assignments.filter((a) => !a.reserve && !a.uitgevallen).length }))
+    .map((p) => ({ km: afstandKm(t, p.session.location ?? undefined), vrij: p.aantal - p.assignments.filter((a) => !a.uitgevallen).length }))
     .filter((x) => x.vrij > 0 && !binnenReisafstand(x.km, t.maxReisAfstand)).length;
 
   return (
     <>
       <h1 className="mb-1 text-xl font-bold">Open opdrachten</h1>
-      <p className="mb-4 text-sm text-neutral-500">
+      <p className="mb-4 text-sm text-zand-500">
         {kaarten.length} opdrachten die bij jouw workshops passen
         {verborgen > 0 && (
           <>
-            {" "}· <span className="text-neutral-400">{verborgen} verborgen omdat ze verder liggen dan je maximale reisafstand van {t.maxReisAfstand} km</span>
+            {" "}· <span className="text-zand-400">{verborgen} verborgen omdat ze verder liggen dan je maximale reisafstand van {t.maxReisAfstand} km</span>
           </>
         )}
       </p>
@@ -109,9 +109,9 @@ export default async function OpenOpdrachten({ searchParams }: { searchParams: {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="font-semibold">{s.workshop.naam}</div>
-                      <div className="text-sm text-neutral-600">{datum(s.datum)} · {s.startTijd} tot {s.eindTijd}</div>
-                      <div className="text-sm text-neutral-500">{s.location?.plaats ?? ""}{km !== null ? ` · ${km} km, ongeveer ${reistijdMin(km)} min` : ""}</div>
-                      <div className="mt-1 text-xs text-neutral-500">{s.doelgroep ?? ""}{s.deelnemers > 0 ? ` · ${s.deelnemers} deelnemers` : ""}</div>
+                      <div className="text-sm text-zand-600">{datum(s.datum)} · {s.startTijd} tot {s.eindTijd}</div>
+                      <div className="text-sm text-zand-500">{s.location?.plaats ?? ""}{km !== null ? ` · ${km} km, ongeveer ${reistijdMin(km)} min` : ""}</div>
+                      <div className="mt-1 text-xs text-zand-500">{s.doelgroep ?? ""}{s.deelnemers > 0 ? ` · ${s.deelnemers} deelnemers` : ""}</div>
                     </div>
                     <div className="shrink-0 text-right">
                       <div className="text-lg font-bold text-skool-600">{euro(p.vergoeding)}</div>
@@ -119,7 +119,7 @@ export default async function OpenOpdrachten({ searchParams }: { searchParams: {
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center gap-2">
-                    {s.aanmeldDeadline && <span className="text-xs text-neutral-500">Reageren voor {datum(s.aanmeldDeadline)}</span>}
+                    {s.aanmeldDeadline && <span className="text-xs text-zand-500">Reageren voor {datum(s.aanmeldDeadline)}</span>}
                     {alGereageerd && <Badge kleur="groen">Je hebt al gereageerd</Badge>}
                     <span className="ml-auto text-sm font-semibold text-skool-600">Bekijk opdracht →</span>
                   </div>

@@ -3,10 +3,11 @@
 import { useState, useTransition } from "react";
 import { profielOpslaan } from "@/lib/docent-acties";
 import { Kaart, Melding } from "@/components/ui";
+import { DOELGROEPEN } from "@/lib/doelgroepen";
 
 type Profiel = {
   voornaam: string; tussenvoegsel: string; achternaam: string; telefoon: string;
-  geboortedatum: string; bio: string; noodcontact: string; noodcontactTel: string;
+  geboortedatum: string; noodcontact: string; noodcontactTel: string;
   straat: string; huisnummer: string; postcode: string; plaats: string;
   samenwerking: string; kvk: string; btwNummer: string; iban: string; rekeninghouder: string;
   uurtarief: string; minDagtarief: string; kmVergoeding: string; maxReisAfstand: string;
@@ -14,7 +15,6 @@ type Profiel = {
   talen: string; doelgroepen: string[];
 };
 
-const DOELGROEPEN = ["Onderbouw PO", "Bovenbouw PO", "VO", "MBO", "HBO", "BSO", "Volwassenen", "Speciaal onderwijs"];
 
 export default function ProfielFormulier({ profiel }: { profiel: Profiel }) {
   const [bezig, start] = useTransition();
@@ -41,10 +41,6 @@ export default function ProfielFormulier({ profiel }: { profiel: Profiel }) {
           <Veld naam="achternaam" titel="Achternaam" waarde={profiel.achternaam} verplicht />
           <Veld naam="telefoon" titel="Mobiel nummer" waarde={profiel.telefoon} type="tel" verplicht />
           <Veld naam="geboortedatum" titel="Geboortedatum" waarde={profiel.geboortedatum} type="date" />
-        </div>
-        <div className="mt-3">
-          <label className="label" htmlFor="bio">Korte introductie</label>
-          <textarea id="bio" name="bio" rows={3} defaultValue={profiel.bio} className="veld" placeholder="Wat maakt jouw workshop leuk?" />
         </div>
       </Kaart>
 
@@ -79,22 +75,41 @@ export default function ProfielFormulier({ profiel }: { profiel: Profiel }) {
           <Veld naam="btwNummer" titel="Btw nummer" waarde={profiel.btwNummer} />
           <Veld naam="iban" titel="IBAN" waarde={profiel.iban} verplicht />
           <Veld naam="rekeninghouder" titel="Naam rekeninghouder" waarde={profiel.rekeninghouder} />
-          <Veld naam="uurtarief" titel="Uurtarief" waarde={profiel.uurtarief} type="number" stap="0.01" />
-          <Veld naam="minDagtarief" titel="Minimum per opdracht" waarde={profiel.minDagtarief} type="number" stap="0.01" />
-          <Veld naam="kmVergoeding" titel="Kilometervergoeding" waarde={profiel.kmVergoeding} type="number" stap="0.01" />
         </div>
-        <p className="mt-2 text-xs text-neutral-500">
+        <p className="mt-2 text-xs text-zand-500">
           Je bankgegevens zijn alleen zichtbaar voor jou en de financiële administratie.
         </p>
+      </Kaart>
+
+      <Kaart>
+        <h2 className="font-semibold">Jouw tarieven</h2>
+        <p className="mt-1 text-sm text-zand-500">
+          Deze tarieven worden beheerd door Skool Workshop. Je kunt ze hier bekijken maar niet aanpassen.
+          Klopt er iets niet? Neem contact op met je planner.
+        </p>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          <div>
+            <span className="label mb-0">Uurtarief</span>
+            <p className="mt-1 text-sm font-medium">{profiel.uurtarief ? `€ ${profiel.uurtarief}` : "Standaardtarief"}</p>
+          </div>
+          <div>
+            <span className="label mb-0">Minimum per opdracht</span>
+            <p className="mt-1 text-sm font-medium">{profiel.minDagtarief ? `€ ${profiel.minDagtarief}` : "Standaardtarief"}</p>
+          </div>
+          <div>
+            <span className="label mb-0">Kilometervergoeding</span>
+            <p className="mt-1 text-sm font-medium">{profiel.kmVergoeding ? `€ ${profiel.kmVergoeding}` : "Standaardtarief"}</p>
+          </div>
+        </div>
       </Kaart>
 
       <Kaart>
         <h2 className="font-semibold">Doelgroepen en talen</h2>
         <div className="mt-3 flex flex-wrap gap-2">
           {DOELGROEPEN.map((d) => (
-            <label key={d} className="flex cursor-pointer items-center gap-2 rounded-full border border-neutral-300 px-3 py-1.5 text-sm has-[:checked]:border-skool-400 has-[:checked]:bg-skool-50">
-              <input type="checkbox" name="doelgroepen" value={d} defaultChecked={profiel.doelgroepen.includes(d)} className="accent-skool-500" />
-              {d}
+            <label key={d.waarde} className="flex cursor-pointer items-center gap-2 rounded-full border border-zand-300 px-3 py-1.5 text-sm has-[:checked]:border-skool-400 has-[:checked]:bg-skool-50">
+              <input type="checkbox" name="doelgroepen" value={d.waarde} defaultChecked={profiel.doelgroepen.includes(d.waarde)} className="accent-skool-500" />
+              {d.label}
             </label>
           ))}
         </div>
