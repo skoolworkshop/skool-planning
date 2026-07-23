@@ -192,3 +192,66 @@ test("bij één workshop staat er geen naam achter Benodigdheden", () => {
   assert.ok(tekst.includes("\nBenodigdheden\n"));
   assert.ok(!tekst.includes("Benodigdheden Theatersport"));
 });
+
+test("een workshop die pas in ronde 2 start, staat niet in ronde 1", () => {
+  const sessies: BevSessie[] = [
+    {
+      workshopNaam: "Theatersport",
+      aanwezigVanaf: "09:30",
+      rondes: [
+        { nummer: 1, startTijd: "10:00", eindTijd: "11:00", aantalGroepen: 3 },
+        { nummer: 2, startTijd: "11:00", eindTijd: "12:00", aantalGroepen: 3 },
+        { nummer: 3, startTijd: "12:00", eindTijd: "13:00", aantalGroepen: 3 },
+      ],
+    },
+    {
+      workshopNaam: "Rap",
+      aanwezigVanaf: "10:30",
+      rondes: [
+        { nummer: 2, startTijd: "11:00", eindTijd: "12:00", aantalGroepen: 1 },
+        { nummer: 3, startTijd: "12:00", eindTijd: "13:00", aantalGroepen: 1 },
+        { nummer: 4, startTijd: "13:00", eindTijd: "14:00", aantalGroepen: 1 },
+      ],
+    },
+  ];
+  const regels = bouwTijdschema(sessies);
+  assert.ok(regels.includes("10:00u-11:00u Workshopronde 1 (3x Theatersport)"));
+  assert.ok(regels.includes("11:00u-12:00u Workshopronde 2 (3x Theatersport, 1x Rap)"));
+  assert.ok(regels.includes("13:00u-14:00u Workshopronde 4 (1x Rap)"));
+  // Theatersport vertrekt eerder dan Rap en krijgt een eigen regel
+  assert.ok(regels.some((r) => r.startsWith("13:00u-") && r.includes("Afbouw") && r.includes("Theatersport")));
+  assert.ok(regels.some((r) => r.startsWith("14:00u-") && r.includes("Afbouw")));
+});
+
+test("de aankomsttijd van een latere workshop staat apart in het schema", () => {
+  const sessies: BevSessie[] = [
+    { workshopNaam: "Graffiti", aanwezigVanaf: "09:30", rondes: [{ nummer: 1, startTijd: "10:00", eindTijd: "11:00", aantalGroepen: 2 }] },
+    { workshopNaam: "Kickboksen", aanwezigVanaf: "10:30", rondes: [{ nummer: 2, startTijd: "11:00", eindTijd: "12:00", aantalGroepen: 1 }] },
+  ];
+  const regels = bouwTijdschema(sessies);
+  assert.ok(regels.some((r) => r.startsWith("09:30u Aankomst") && r.includes("Graffiti")));
+  assert.ok(regels.some((r) => r.startsWith("10:30u Aankomst") && r.includes("Kickboksen")));
+});
+
+test("twee workshopdocenten op dezelfde workshop met verschillende rondes", () => {
+  // Docent 1 draait alle vier de rondes, docent 2 alleen ronde 2 en 3
+  const sessies: BevSessie[] = [
+    {
+      workshopNaam: "Caribbean Drums",
+      aanwezigVanaf: "09:30",
+      afbouwTot: "14:45",
+      rondes: [
+        { nummer: 1, startTijd: "10:00", eindTijd: "11:00", aantalGroepen: 1 },
+        { nummer: 2, startTijd: "11:00", eindTijd: "12:00", aantalGroepen: 2 },
+        { nummer: 3, startTijd: "12:30", eindTijd: "13:30", aantalGroepen: 2 },
+        { nummer: 4, startTijd: "13:30", eindTijd: "14:30", aantalGroepen: 1 },
+      ],
+    },
+  ];
+  const regels = bouwTijdschema(sessies);
+  assert.ok(regels.includes("10:00u-11:00u Workshopronde 1 (1x Caribbean Drums)"));
+  assert.ok(regels.includes("11:00u-12:00u Workshopronde 2 (2x Caribbean Drums)"));
+  assert.ok(regels.includes("12:30u-13:30u Workshopronde 3 (2x Caribbean Drums)"));
+  assert.ok(regels.includes("13:30u-14:30u Workshopronde 4 (1x Caribbean Drums)"));
+  assert.equal(aantalRondes(sessies), 4);
+});
