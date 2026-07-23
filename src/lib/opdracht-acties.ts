@@ -265,3 +265,34 @@ export async function afbeeldingInstellen(workshopId: string, url: string) {
   revalidatePath("/beheer/workshops");
   return { ok: true };
 }
+
+/**
+ * Zet het persoonlijke tarief van een workshopdocent.
+ * Leeg laten betekent: gebruik het standaardtarief uit de instellingen.
+ */
+export async function docentTariefOpslaan(teacherId: string, formData: FormData) {
+  const u = await vereisRol(...BEHEER);
+  const teacher = await db.teacherProfile.findUnique({ where: { id: teacherId } });
+  if (!teacher) return { fout: "Deze workshopdocent bestaat niet." };
+
+  const getal = (naam: string) => {
+    const ruw = formData.get(naam);
+    if (ruw === null || String(ruw).trim() === "") return null;
+    const n = Number(String(ruw).replace(",", "."));
+    return Number.isFinite(n) && n >= 0 ? n : null;
+  };
+
+  await db.teacherProfile.update({
+    where: { id: teacherId },
+    data: {
+      uurtarief: getal("uurtarief"),
+      minDagtarief: getal("minDagtarief"),
+      kmVergoeding: getal("kmVergoeding"),
+      maxReisAfstand: getal("maxReisAfstand") ? Math.round(getal("maxReisAfstand")!) : null,
+    },
+  });
+
+  await logAudit({ userId: u.id, actie: "TARIEF_AANGEPAST", entiteit: "TeacherProfile", entiteitId: teacherId, ip: ipAdres() });
+  revalidatePath(`/beheer/docenten/${teacherId}`);
+  return { ok: true };
+}
