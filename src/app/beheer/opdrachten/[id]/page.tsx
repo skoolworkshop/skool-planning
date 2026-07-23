@@ -5,7 +5,8 @@ import { vereisGebruiker } from "@/lib/auth";
 import { Kaart, PaginaKop, Badge, statusKleur, Rij } from "@/components/ui";
 import { datum, euro, label } from "@/lib/format";
 import { bouwAlleTijdschemas, bouwBevestiging, samenvatting, type BevSessie } from "@/lib/bevestiging";
-import { opdrachtPrijs } from "@/lib/tarieven";
+import { opdrachtPrijs, vergoedingVoorOpdracht } from "@/lib/tarieven";
+import { haalTarieven } from "@/lib/tarief-acties";
 import Rondes from "./Rondes";
 import Bevestiging from "./Bevestiging";
 
@@ -37,7 +38,16 @@ export default async function ProjectDetail({ params }: { params: { id: string }
     select: { id: true, naam: true },
   });
 
-  const docentkosten = p.sessions.flatMap((s) => s.positions).reduce((n, x) => n + Number(x.vergoeding) * x.aantal, 0);
+  // Kosten per workshopdocent volgens dezelfde regels als de workshopdocent zelf ziet
+  const standaard = await haalTarieven();
+  const docentkosten = p.sessions.reduce((n, s) => {
+    const perPersoon = vergoedingVoorOpdracht(
+      { aanwezigVanaf: s.aanwezigVanaf, startTijd: s.startTijd, eindTijd: s.eindTijd, afbouwTot: s.afbouwTot },
+      standaard
+    ).werk;
+    const aantal = s.positions.reduce((x, pos) => x + pos.aantal, 0);
+    return n + perPersoon * aantal;
+  }, 0);
   const marge = Number(p.omzet) - docentkosten - Number(p.materiaalkosten);
 
   // Wat deze dag volgens de tarieven op de website zou kosten
@@ -186,7 +196,12 @@ export default async function ProjectDetail({ params }: { params: { id: string }
               </span>
             </Rij>
             <Rij label="Afgesproken omzet">{euro(p.omzet)}</Rij>
-            <Rij label="Kosten workshopdocenten">{euro(docentkosten)}</Rij>
+            <Rij label="Kosten workshopdocenten">
+              {euro(docentkosten)}
+              <span className="block text-xs font-normal text-zand-500">
+                Uren workshop maal het uurtarief, zonder reiskosten
+              </span>
+            </Rij>
             <Rij label="Materiaalkosten">{euro(p.materiaalkosten)}</Rij>
             <Rij label="Wat je overhoudt">
               <span className={marge < 0 ? "font-semibold text-red-700" : "font-semibold text-emerald-700"}>

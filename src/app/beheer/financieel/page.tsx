@@ -58,8 +58,8 @@ export default async function FinancieelPagina({ searchParams }: { searchParams:
               uren={Number(w.uren)}
               kilometers={w.kilometers}
               regels={[
-                ["Workshopvergoeding", euro(w.workshopVergoeding)],
-                ["Kilometervergoeding", euro(w.kmVergoeding)],
+                [`Werk, ${Number(w.uren)} uur`, euro(w.workshopVergoeding)],
+                [`Reizen, ${w.kilometers} km heen en terug`, euro(w.kmVergoeding)],
                 ["Openbaar vervoer", euro(w.ovKosten)],
                 ["Parkeerkosten", euro(w.parkeerkosten)],
                 ["Overige kosten", euro(w.overigeKosten)],
