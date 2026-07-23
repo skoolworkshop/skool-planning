@@ -6,10 +6,13 @@ import { magGevoeligeGegevens } from "@/lib/rbac";
 import { Kaart, PaginaKop, Badge, statusKleur, Rij, Melding } from "@/components/ui";
 import { datum, euro, label } from "@/lib/format";
 import Acties from "./Acties";
+import Tarief from "./Tarief";
+import { haalTarieven } from "@/lib/tarief-acties";
 
 export const dynamic = "force-dynamic";
 
 export default async function DocentDetail({ params }: { params: { id: string } }) {
+  const tarieven = await haalTarieven();
   const u = await vereisGebruiker();
   const d = await db.teacherProfile.findUnique({
     where: { id: params.id },
@@ -63,13 +66,20 @@ export default async function DocentDetail({ params }: { params: { id: string } 
         </Kaart>
 
         <Kaart>
+          <Tarief
+            teacherId={d.id}
+            uurtarief={d.uurtarief ? Number(d.uurtarief) : null}
+            minDagtarief={d.minDagtarief ? Number(d.minDagtarief) : null}
+            kmVergoeding={d.kmVergoeding ? Number(d.kmVergoeding) : null}
+            maxReisAfstand={d.maxReisAfstand ?? null}
+            standaard={{ uurtarief: tarieven.uurtarief, minimumPerDag: tarieven.minimumPerDag, kmTarief: tarieven.kmTarief }}
+          />
+        </Kaart>
+
+        <Kaart>
           <h2 className="mb-2 font-semibold">Werk en vervoer</h2>
           <Rij label="Samenwerking">{d.samenwerking}</Rij>
           <Rij label="KvK-nummer">{d.kvk}</Rij>
-          <Rij label="Uurtarief">{d.uurtarief ? euro(d.uurtarief) : ""}</Rij>
-          <Rij label="Minimum dagtarief">{d.minDagtarief ? euro(d.minDagtarief) : ""}</Rij>
-          <Rij label="Kilometervergoeding">{d.kmVergoeding ? euro(d.kmVergoeding) : ""}</Rij>
-          <Rij label="Maximale reisafstand">{d.maxReisAfstand ? `${d.maxReisAfstand} km` : ""}</Rij>
           <Rij label="Vervoer">
             {[d.eigenVervoer && "eigen vervoer", d.rijbewijs && "rijbewijs", d.ovMogelijk && "openbaar vervoer"].filter(Boolean).join(", ")}
           </Rij>
