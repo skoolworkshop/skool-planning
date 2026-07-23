@@ -36,6 +36,7 @@ enum DocStatus {
   IN_BEHANDELING
   GOEDGEKEURD
   AFGEKEURD
+  AANVULLING_NODIG
   VERLOPEN
 }
 
@@ -48,6 +49,34 @@ enum DocType {
   BTW
   CERTIFICAAT
   OVERIG
+}
+
+/// Centrale doelgroeplijst. Overal dezelfde waarden, geen vrije tekst meer.
+enum Doelgroep {
+  PRIMAIR_ONDERWIJS
+  VOORTGEZET_ONDERWIJS
+  SPECIAAL_ONDERWIJS
+  MBO
+  HBO
+  UNIVERSITEIT
+  BUITENSCHOOLSE_OPVANG
+  KINDEROPVANG
+  BIBLIOTHEEK
+  JEUGDINSTELLING
+  ZORGINSTELLING
+  GEMEENTE
+  BEDRIJF
+  PARTICULIER
+  VOLWASSENEN
+  SENIOREN
+  OVERIG
+}
+
+/// Wat een workshopdocent met een workshop mag. Alleen een beheerder zet dit.
+enum Bevoegdheid {
+  ZELFSTANDIG
+  ASSISTEREN
+  NIET_INZETBAAR
 }
 
 enum ClientType {
@@ -102,9 +131,7 @@ enum ApplicationStatus {
   BEKEKEN
   AANGEMELD
   IN_BEHANDELING
-  RESERVELIJST
-  GESELECTEERD
-  BEVESTIGD
+  TOEGEWEZEN
   AFGEWEZEN
   GEWEIGERD
   INGETROKKEN
@@ -168,7 +195,6 @@ model TeacherProfile {
   achternaam   String
   telefoon     String?
   geboortedatum DateTime?
-  bio          String?
   noodcontact  String?
   noodcontactTel String?
   straat       String?
@@ -186,6 +212,10 @@ model TeacherProfile {
   iban         String?
   rekeninghouder String?
   uurtarief    Decimal?      @db.Decimal(10, 2)
+  tariefVanaf  DateTime?     // vanaf wanneer dit tarief geldt
+  tariefNotitie String?      // interne afspraak, alleen voor beheerders
+  tariefDoor   String?       // wie het tarief voor het laatst aanpaste
+  tariefOp     DateTime?
   minDagtarief Decimal?      @db.Decimal(10, 2)
   kmVergoeding Decimal?      @db.Decimal(10, 2)
   maxReisAfstand Int?
@@ -194,7 +224,7 @@ model TeacherProfile {
   rijbewijs    Boolean       @default(false)
   ovMogelijk   Boolean       @default(true)
   talen        String[]      @default([])
-  doelgroepen  String[]      @default([])
+  doelgroepen  Doelgroep[]   @default([])
   interneNotitie String?
 
   status       TeacherStatus @default(UITGENODIGD)
@@ -204,6 +234,7 @@ model TeacherProfile {
 
   skills       TeacherWorkshopSkill[]
   documents    TeacherDocument[]
+  tariefHistorie TariefHistorie[]
   availability Availability[]
   applications Application[]
   assignments  Assignment[]
@@ -220,8 +251,9 @@ model TeacherWorkshopSkill {
   teacher    TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   workshopId String
   workshop   Workshop       @relation(fields: [workshopId], references: [id], onDelete: Cascade)
-  niveau     Int            @default(2) // 1 = beginner, 2 = ervaren, 3 = expert
-  zelfstandig Boolean       @default(true)
+  bevoegdheid Bevoegdheid   @default(ZELFSTANDIG) // alleen een beheerder zet dit
+  gezetDoor  String?
+  gezetOp    DateTime?
   createdAt  DateTime       @default(now())
 
   @@unique([teacherId, workshopId])
@@ -286,10 +318,15 @@ model Workshop {
   materialenDoor String? @default("Skool Workshop")
   klantBenodigdheden String? // tekst voor de bevestigingsmail: wat de opdrachtgever regelt
   voorbeeldLink String?      // link naar een voorbeeldfoto van de opstelling
-  afbeeldingUrl String?      // foto van skoolworkshop.nl
-  siteSlug      String?      // slug op skoolworkshop.nl, om de foto op te halen
+  afbeeldingUrl String?      // pad in de opslag van de app, of de bron als fallback
+  afbeeldingAlt String?      // alt-tekst bij de foto
+  bronPaginaUrl String?      // workshoppagina op skoolworkshop.nl
+  bronAfbeeldingUrl String?  // oorspronkelijke afbeeldings-URL
+  afbeeldingGesyncedOp DateTime?
+  afbeeldingControle Boolean @default(false) // true als de koppeling onzeker is
+  siteSlug      String?      // slug op skoolworkshop.nl
   locatieEisen  String?
-  doelgroepen   String[] @default([])
+  doelgroepen   Doelgroep[] @default([])
   minLeeftijd   Int?
   maxLeeftijd   Int?
   vereisteDocumenten DocType[] @default([])
@@ -303,6 +340,7 @@ model Workshop {
   skills   TeacherWorkshopSkill[]
   sessions WorkshopSession[]
   slots    EnrollmentSlot[]
+  afbeelding WorkshopAfbeelding?
 
   @@index([actief])
 }
@@ -312,7 +350,8 @@ model Client {
   klantnummer String     @unique
   naam        String
   type        ClientType @default(BASISSCHOOL)
-  doelgroep   String?
+  doelgroepen Doelgroep[] @default([])
+  doelgroepToelichting String? // alleen invullen bij OVERIG
   cjpNummer   String?   // Cultuurkaart / CJP schoolnummer, alleen bij onderwijsklanten
   factuurEmail String?
   factuurAdres String?
@@ -424,7 +463,8 @@ model WorkshopSession {
   afbouwTot    String?       // eindtijd afbouw en vertrek
   deelnemers   Int           @default(0)
   leeftijd     String?
-  doelgroep    String?
+  doelgroep    Doelgroep?
+  doelgroepToelichting String?
   aantalRondes Int           @default(1)
   tijdPerRonde Int           @default(60)
   ruimte       String?
@@ -506,10 +546,9 @@ model Assignment {
   position   StaffingPosition @relation(fields: [positionId], references: [id], onDelete: Cascade)
   teacherId  String
   teacher    TeacherProfile   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  reserve    Boolean          @default(false)
-  bevestigd  Boolean          @default(false)
-  bevestigdOp DateTime?
   uitgevallen Boolean         @default(false)
+  toegewezenDoor String?
+  toegewezenOp DateTime        @default(now())
   vervangerVoor String?
   createdAt  DateTime         @default(now())
   updatedAt  DateTime         @updatedAt
@@ -773,4 +812,36 @@ model Instelling {
   sleutel   String   @id
   waarde    String
   updatedAt DateTime @updatedAt
+}
+
+/// Historie van tariefafspraken per workshopdocent.
+model TariefHistorie {
+  id         String         @id @default(uuid())
+  teacherId  String
+  teacher    TeacherProfile @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  veld       String         // uurtarief, minDagtarief of kmVergoeding
+  oudeWaarde String?
+  nieuweWaarde String?
+  reden      String?
+  doorUserId String?
+  createdAt  DateTime       @default(now())
+
+  @@index([teacherId, createdAt])
+}
+
+/// De opgeslagen foto van een workshop. We bewaren de bytes zelf,
+/// zodat we niet permanent naar de website hoeven te hotlinken.
+model WorkshopAfbeelding {
+  id         String   @id @default(uuid())
+  workshopId String   @unique
+  workshop   Workshop @relation(fields: [workshopId], references: [id], onDelete: Cascade)
+  data       Bytes
+  mimeType   String
+  bytes      Int
+  hash       String   // om dubbele downloads te herkennen
+  bronUrl    String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([hash])
 }
