@@ -194,3 +194,27 @@ export async function workshopPrijsOpslaan(workshopId: string, prijs: string) {
   revalidatePath("/beheer/workshops");
   return { ok: true };
 }
+
+
+/**
+ * De tarieven zoals ze voor één workshopdocent gelden.
+ * Heeft hij een eigen tarief, dan gaat dat voor op het standaardtarief.
+ */
+// PUBLIEK: een workshopdocent mag zijn eigen tarieven zien
+export async function tarievenVoor(teacher: {
+  uurtarief?: unknown;
+  minDagtarief?: unknown;
+  kmVergoeding?: unknown;
+}): Promise<Tarieven> {
+  const basis = await haalTarieven();
+  const getal = (v: unknown) => {
+    const n = Number(v);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  };
+  return {
+    ...basis,
+    uurtarief: getal(teacher.uurtarief) ?? basis.uurtarief,
+    minimumPerDag: getal(teacher.minDagtarief) ?? basis.minimumPerDag,
+    kmTarief: getal(teacher.kmVergoeding) ?? basis.kmTarief,
+  };
+}

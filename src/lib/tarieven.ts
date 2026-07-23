@@ -157,3 +157,112 @@ export function uitlegVergoeding(v: Vergoeding, t: Tarieven = STANDAARD_TARIEVEN
   if (v.parkeerkosten > 0) regels.push(`Parkeerkosten € ${v.parkeerkosten.toFixed(2)}`);
   return regels;
 }
+
+/* ---------------- vergoeding voor één opdracht ---------------- */
+
+export type OpdrachtInvoer = {
+  /** Tijd waarop de workshopdocent aanwezig moet zijn. Alleen ter informatie, niet betaald. */
+  aanwezigVanaf?: string | null;
+  /** Begin van de workshop. Vanaf hier telt de tijd mee. */
+  startTijd: string;
+  /** Einde van de workshop. Tot hier telt de tijd mee. */
+  eindTijd: string;
+  /** Tijd waarop hij na afbouw kan vertrekken. Alleen ter informatie, niet betaald. */
+  afbouwTot?: string | null;
+  /** Enkele reis in kilometers, van huisadres naar locatie. */
+  kilometers?: number | null;
+  /** Enkele reis in minuten. */
+  reistijdMinuten?: number | null;
+};
+
+export type OpdrachtVergoeding = {
+  /** Begin van de betaalde workshoptijd. */
+  vanTijd: string;
+  /** Einde van de betaalde workshoptijd. */
+  totTijd: string;
+  /** Wanneer hij aanwezig moet zijn, ter informatie. */
+  aanwezigVanaf: string | null;
+  /** Wanneer hij kan vertrekken, ter informatie. */
+  afbouwTot: string | null;
+  uren: number;
+  werk: number;
+  minimumToegepast: boolean;
+  kilometers: number;
+  reiskosten: number;
+  reistijdMinuten: number;
+  reistijdVergoeding: number;
+  reisTotaal: number;
+  totaal: number;
+  uitleg: { werk: string; reis: string[] };
+};
+
+function naarMin(t: string): number {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(t.trim());
+  return m ? Number(m[1]) * 60 + Number(m[2]) : 0;
+}
+
+/**
+ * Wat een workshopdocent verdient aan één opdrachtdag.
+ *
+ * De betaalde tijd is de duur van de workshop zelf, van starttijd tot eindtijd.
+ * Aankomen, voorbereiden en opruimen tellen niet mee als betaalde uren.
+ * Komt het bedrag onder het dagminimum uit, dan geldt het dagminimum.
+ *
+ * Reiskosten en reistijd staan er los van, zodat je ziet wat hij aan de
+ * workshop verdient en wat aan het reizen.
+ */
+export function vergoedingVoorOpdracht(
+  invoer: OpdrachtInvoer,
+  t: Tarieven = STANDAARD_TARIEVEN
+): OpdrachtVergoeding {
+  // Alleen de workshop zelf is betaalde tijd
+  const van = invoer.startTijd;
+  const tot = invoer.eindTijd;
+  const minuten = Math.max(0, naarMin(tot) - naarMin(van));
+  const uren = Math.round((minuten / 60) * 100) / 100;
+
+  const berekend = Math.round(uren * t.uurtarief * 100) / 100;
+  const werk = Math.max(berekend, t.minimumPerDag);
+  const minimumToegepast = berekend < t.minimumPerDag;
+
+  const km = invoer.kilometers ?? 0;
+  const reis = reiskosten(km, t);
+  const reistijd = invoer.reistijdMinuten ?? 0;
+  const reistijdGeld = reistijdVergoeding(reistijd, t);
+  const reisTotaal = Math.round((reis + reistijdGeld) * 100) / 100;
+
+  const reisUitleg: string[] = [];
+  if (reis > 0) {
+    reisUitleg.push(`${km} km heen en ${km} km terug, maal € ${t.kmTarief.toFixed(2)} per km`);
+  }
+  if (reistijdGeld > 0) {
+    const uurEnkel = Math.round((reistijd / 60) * 10) / 10;
+    reisUitleg.push(
+      `${uurEnkel} uur rijden per kant, dat is meer dan ${Math.round((t.reistijdDrempelMinuten / 60) * 10) / 10} uur, ` +
+        `dus heen en terug vergoed tegen € ${(t.uurtarief * t.reistijdDeel).toFixed(2)} per uur`
+    );
+  }
+  if (reisUitleg.length === 0) reisUitleg.push("Geen reisvergoeding, de afstand is niet bekend");
+
+  return {
+    vanTijd: van,
+    totTijd: tot,
+    aanwezigVanaf: invoer.aanwezigVanaf?.trim() || null,
+    afbouwTot: invoer.afbouwTot?.trim() || null,
+    uren,
+    werk,
+    minimumToegepast,
+    kilometers: km,
+    reiskosten: reis,
+    reistijdMinuten: reistijd,
+    reistijdVergoeding: reistijdGeld,
+    reisTotaal,
+    totaal: Math.round((werk + reisTotaal) * 100) / 100,
+    uitleg: {
+      werk: minimumToegepast
+        ? `${uren} uur workshop maal € ${t.uurtarief.toFixed(2)} is € ${berekend.toFixed(2)}, aangevuld tot het dagminimum van € ${t.minimumPerDag.toFixed(2)}`
+        : `${uren} uur workshop, van ${van} tot ${tot}, maal € ${t.uurtarief.toFixed(2)} per uur`,
+      reis: reisUitleg,
+    },
+  };
+}

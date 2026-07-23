@@ -182,6 +182,7 @@ export async function werkregistratieIndienen(assignmentId: string, formData: Fo
     { uren, kilometers, reistijdMinuten: reistijd, parkeerkosten: parkeerkosten + ovKosten + overigeKosten },
     tarieven
   );
+  // Werk en reizen apart bewaren, zodat je later ziet waar het geld heen ging
   const basis = v.uurVergoeding;
   const kmVergoeding = Math.round((v.reiskosten + v.reistijdVergoeding) * 100) / 100;
   const totaal = v.totaal;

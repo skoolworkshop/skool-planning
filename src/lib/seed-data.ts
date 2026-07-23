@@ -44,7 +44,8 @@ const WORKSHOPS_DATA = CATALOGUS.map((w) => ({
   cat: w.categorie,
   duur: w.duur,
   verkoopprijs: w.prijs, // wat de klant betaalt
-  vergoeding: 45 * (w.duur / 60) < 100 ? 100 : Math.round(45 * (w.duur / 60) * 100) / 100,
+  // Richtbedrag per workshopdocent per dagdeel, de echte berekening loopt via src/lib/tarieven.ts
+  vergoeding: Math.max(100, Math.round(45 * ((w.duur + 45) / 60) * 100) / 100),
   docs: (w.categorie === "Media" || w.naam.includes("Zelfverdediging") || w.naam.includes("Kickboksen")
     ? ["VOG", "CERTIFICAAT"]
     : ["VOG"]) as DocType[],

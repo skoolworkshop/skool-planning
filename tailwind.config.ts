@@ -5,17 +5,18 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
+        // Het oranje uit het beeldmerk, de S in het logo
         skool: {
-          50: "#FFF5E8",
-          100: "#FFE8CC",
-          200: "#FFD09B",
-          300: "#FFB566",
-          400: "#FB9A2E",
-          500: "#F47900",
-          600: "#DB6C00",
-          700: "#B25700",
-          800: "#8C4500",
-          900: "#6D3600",
+          50: "#FFF7E9",
+          100: "#FEEDCE",
+          200: "#FDD99C",
+          300: "#FBC367",
+          400: "#F7AE33",
+          500: "#F49700",
+          600: "#D88500",
+          700: "#B06B00",
+          800: "#8A5400",
+          900: "#6C4200",
         },
         // Witte basis met een neutraal grijs voor randen en bijschriften.
         zand: {
