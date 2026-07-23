@@ -3,7 +3,8 @@ import { db } from "@/lib/db";
 import { vereisGebruiker } from "@/lib/auth";
 import { Kaart, Badge, Leeg, Melding } from "@/components/ui";
 import { datum, euro, afstandKm, reistijdMin } from "@/lib/format";
-import { binnenReisafstand } from "@/lib/tarieven";
+import { binnenReisafstand, vergoedingVoorOpdracht } from "@/lib/tarieven";
+import { tarievenVoor } from "@/lib/tarief-acties";
 
 export const dynamic = "force-dynamic";
 
@@ -11,6 +12,7 @@ export default async function OpenOpdrachten({ searchParams }: { searchParams: {
   const u = await vereisGebruiker();
   const t = await db.teacherProfile.findUnique({ where: { userId: u.id }, include: { skills: true } });
   if (!t) return <Melding soort="fout">Geen workshopdocentprofiel gevonden.</Melding>;
+  const tarieven = await tarievenVoor(t);
 
   if (t.status !== "GOEDGEKEURD") {
     return (
@@ -103,6 +105,17 @@ export default async function OpenOpdrachten({ searchParams }: { searchParams: {
           {kaarten.map(({ p, km, vrij }) => {
             const s = p.session;
             const alGereageerd = p.applications.length > 0;
+            const v = vergoedingVoorOpdracht(
+              {
+                aanwezigVanaf: s.aanwezigVanaf,
+                startTijd: s.startTijd,
+                eindTijd: s.eindTijd,
+                afbouwTot: s.afbouwTot,
+                kilometers: km,
+                reistijdMinuten: km === null ? null : reistijdMin(km),
+              },
+              tarieven
+            );
             return (
               <li key={p.id}>
                 <Link href={`/docent/opdrachten/${s.id}`} className="kaart block overflow-hidden transition hover:border-skool-300">
@@ -125,8 +138,12 @@ export default async function OpenOpdrachten({ searchParams }: { searchParams: {
                       <div className="mt-1 text-xs text-zand-500">{s.doelgroep ?? ""}{s.deelnemers > 0 ? ` · ${s.deelnemers} deelnemers` : ""}</div>
                     </div>
                     <div className="shrink-0 text-right">
-                      <div className="text-lg font-bold text-skool-600">{euro(p.vergoeding)}</div>
-                      <Badge kleur={vrij > 1 ? "blauw" : "oranje"}>{vrij} {vrij === 1 ? "plek" : "plekken"}</Badge>
+                      <div className="text-lg font-bold text-skool-600">{euro(v.totaal)}</div>
+                      <div className="text-xs text-zand-500">
+                        {euro(v.werk)} workshop
+                        {v.reisTotaal > 0 ? ` · ${euro(v.reisTotaal)} reizen` : ""}
+                      </div>
+                      <div className="mt-1"><Badge kleur={vrij > 1 ? "blauw" : "oranje"}>{vrij} {vrij === 1 ? "plek" : "plekken"}</Badge></div>
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap items-center gap-2 p-4 pt-0">

@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { vereisGebruiker } from "@/lib/auth";
 import { Kaart, Badge, Rij, Melding } from "@/components/ui";
 import { datum, datumLang, euro, afstandKm, reistijdMin } from "@/lib/format";
+import { vergoedingVoorOpdracht } from "@/lib/tarieven";
+import { tarievenVoor } from "@/lib/tarief-acties";
 import Aanmeldknop from "./Aanmeldknop";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +31,18 @@ export default async function OpdrachtDetailDocent({ params }: { params: { id: s
   // Is deze docent toegewezen? Dan pas volledige klant- en contactgegevens tonen.
   const toegewezen = s.positions.some((p) => p.assignments.some((a) => a.teacherId === t.id && !a.uitgevallen));
   const km = afstandKm(t, s.location ?? undefined);
+  const tarieven = await tarievenVoor(t);
+  const v = vergoedingVoorOpdracht(
+    {
+      aanwezigVanaf: s.aanwezigVanaf,
+      startTijd: s.startTijd,
+      eindTijd: s.eindTijd,
+      afbouwTot: s.afbouwTot,
+      kilometers: km,
+      reistijdMinuten: km === null ? null : reistijdMin(km),
+    },
+    tarieven
+  );
   const openPositie = s.positions.find(
     (p) => p.gepubliceerd && !p.gesloten && p.aantal > p.assignments.filter((a) => !a.uitgevallen).length
   );
@@ -50,13 +64,55 @@ export default async function OpdrachtDetailDocent({ params }: { params: { id: s
 
       <div className="space-y-4">
         <Kaart>
-          <div className="mb-2 flex items-center justify-between">
-            <h2 className="font-semibold">Vergoeding</h2>
-            <span className="text-2xl font-bold text-skool-600">{euro(openPositie?.vergoeding ?? s.vergoeding)}</span>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="font-semibold">Wat je verdient</h2>
+            <span className="text-2xl font-bold text-skool-600">{euro(v.totaal)}</span>
           </div>
-          <Rij label="Reiskosten">{s.reiskosten}</Rij>
-          <Rij label="Aanwezig vanaf">{s.aanwezigVanaf}</Rij>
-          <Rij label="Aanmelddeadline">{s.aanmeldDeadline ? datum(s.aanmeldDeadline) : "Niet ingesteld"}</Rij>
+
+          <div className="space-y-3">
+            <div className="rounded-xl border border-zand-200 p-3">
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm font-medium">Voor de workshop</span>
+                <span className="font-semibold">{euro(v.werk)}</span>
+              </div>
+              <p className="mt-1 text-xs text-zand-500">{v.uitleg.werk}</p>
+              {v.minimumToegepast && (
+                <p className="mt-1 text-xs text-emerald-700">Je krijgt het dagminimum, ook al is de opdracht korter.</p>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-zand-200 p-3">
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm font-medium">Voor het reizen</span>
+                <span className="font-semibold">{euro(v.reisTotaal)}</span>
+              </div>
+              <ul className="mt-1 space-y-0.5 text-xs text-zand-500">
+                {v.uitleg.reis.map((r, i) => <li key={i}>{r}</li>)}
+              </ul>
+              {v.reiskosten > 0 && v.reistijdVergoeding > 0 && (
+                <p className="mt-1 text-xs text-zand-500">
+                  Kilometers {euro(v.reiskosten)} plus reistijd {euro(v.reistijdVergoeding)}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-baseline justify-between border-t border-zand-200 pt-3">
+              <span className="font-medium">Totaal</span>
+              <span className="text-lg font-bold text-skool-600">{euro(v.totaal)}</span>
+            </div>
+          </div>
+
+          <div className="mt-3 border-t border-zand-200 pt-2">
+            <Rij label="Workshop">{v.vanTijd} tot {v.totTijd}</Rij>
+            <Rij label="Aanwezig vanaf">{v.aanwezigVanaf ?? "In overleg"}</Rij>
+            <Rij label="Klaar om te vertrekken">{v.afbouwTot ?? "Direct na afloop"}</Rij>
+            <Rij label="Aanmelddeadline">{s.aanmeldDeadline ? datum(s.aanmeldDeadline) : "Niet ingesteld"}</Rij>
+          </div>
+
+          <p className="mt-2 text-xs text-zand-400">
+            Je wordt betaald per uur workshop. Opbouwen en afbouwen horen erbij maar tellen niet als uren.
+            Dit is een berekening vooraf, na afloop vul je je echte uren en kilometers in.
+          </p>
         </Kaart>
 
         <Kaart>
@@ -125,7 +181,7 @@ export default async function OpdrachtDetailDocent({ params }: { params: { id: s
       </div>
 
       {openPositie && !eigenReactie && s.status !== "GEANNULEERD" && (
-        <Aanmeldknop positionId={openPositie.id} vergoeding={Number(openPositie.vergoeding)} />
+        <Aanmeldknop positionId={openPositie.id} vergoeding={v.totaal} />
       )}
     </>
   );
