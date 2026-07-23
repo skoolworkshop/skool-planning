@@ -6,7 +6,7 @@
  * Het vullen is opgesplitst in stappen. Elke stap is klein genoeg om binnen
  * de tijdslimiet van een serverless functie af te ronden.
  */
-import type { PrismaClient, DocType, Doelgroep } from "@prisma/client";
+import type { PrismaClient, DocType, Doelgroep, Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { maakCodes } from "./inschrijving";
 import { CATALOGUS, CATEGORIE_KLEUR, MAX_DEELNEMERS } from "./workshops-catalogus";
@@ -224,8 +224,7 @@ export async function stapDocenten(db: PrismaClient) {
   const users = await db.user.findMany({ where: { role: "DOCENT" } });
   const perEmail = new Map(users.map((u) => [u.email, u.id]));
 
-  await db.teacherProfile.createMany({
-    data: DOCENTEN_DATA.map((d, i) => {
+  const profielen: Prisma.TeacherProfileCreateManyInput[] = DOCENTEN_DATA.map((d, i) => {
       const status = i === 8 ? "TER_BEOORDELING" : i === 9 ? "AANVULLING_NODIG" : "GOEDGEKEURD";
       return {
         userId: perEmail.get(`docent${i + 1}@example.com`)!,
@@ -233,7 +232,6 @@ export async function stapDocenten(db: PrismaClient) {
         achternaam: d.a,
         telefoon: `06 1234 56${String(i).padStart(2, "0")}`,
         geboortedatum: new Date(1990 + i, (i * 3) % 12, ((i * 5) % 27) + 1),
-        bio: `${d.v} geeft met veel energie workshops en werkt graag met jongeren.`,
         straat: "Voorbeeldstraat",
         huisnummer: String(10 + i),
         postcode: d.pc,
@@ -256,13 +254,13 @@ export async function stapDocenten(db: PrismaClient) {
         status: status as never,
         goedgekeurdOp: status === "GOEDGEKEURD" ? dagen(-120 + i) : null,
       };
-    }),
   });
+  await db.teacherProfile.createMany({ data: profielen });
 
   const docenten = await leesDocenten(db);
 
   const skills: { teacherId: string; workshopId: string; bevoegdheid: never }[] = [];
-  const documenten: Record<string, unknown>[] = [];
+  const documenten: Prisma.TeacherDocumentCreateManyInput[] = [];
   const beschikbaar: { teacherId: string; weekdag: number; beschikbaar: boolean }[] = [];
 
   for (let i = 0; i < DOCENTEN_DATA.length; i++) {
@@ -306,7 +304,7 @@ export async function stapDocenten(db: PrismaClient) {
   }
 
   await db.teacherWorkshopSkill.createMany({ data: skills });
-  await db.teacherDocument.createMany({ data: documenten as never });
+  await db.teacherDocument.createMany({ data: documenten });
   await db.availability.createMany({ data: beschikbaar });
 
   return { docenten: DOCENTEN_DATA.length };
@@ -466,9 +464,9 @@ export async function stapOpdrachten(db: PrismaClient) {
 
   // Bezetting varieren
   const toewijzingen: { positionId: string; teacherId: string; bevestigd: boolean; bevestigdOp: Date | null }[] = [];
-  const aanmeldingen: Record<string, unknown>[] = [];
+  const aanmeldingen: Prisma.ApplicationCreateManyInput[] = [];
   const teSluiten: string[] = [];
-  const sessieUpdates: { id: string; data: Record<string, unknown> }[] = [];
+  const sessieUpdates: { id: string; data: Prisma.WorkshopSessionUpdateInput }[] = [];
   const werkRegels: { i: number; positionId: string; teacherId: string }[] = [];
 
   for (let i = 0; i < AANTAL_OPDRACHTEN; i++) {
@@ -483,14 +481,14 @@ export async function stapOpdrachten(db: PrismaClient) {
     if (verleden) {
       const doc = kandidaten[0];
       toewijzingen.push({ positionId: positie.id, teacherId: doc.id, bevestigd: true, bevestigdOp: dagen(dagenVooruit - 5) });
-      aanmeldingen.push({ positionId: positie.id, teacherId: doc.id, soort: "AANMELDING", status: "BEVESTIGD", gereageerdOp: dagen(dagenVooruit - 7) });
+      aanmeldingen.push({ positionId: positie.id, teacherId: doc.id, soort: "AANMELDING", status: "TOEGEWEZEN", gereageerdOp: dagen(dagenVooruit - 7) });
       teSluiten.push(positie.id);
       sessieUpdates.push({ id: sessies[i].id, data: { status: "UITGEVOERD" } });
       werkRegels.push({ i, positionId: positie.id, teacherId: doc.id });
     } else if (i % 4 === 1) {
       for (let k = 0; k < aantalDocenten && k < kandidaten.length; k++) {
         toewijzingen.push({ positionId: positie.id, teacherId: kandidaten[k].id, bevestigd: k === 0, bevestigdOp: null });
-        aanmeldingen.push({ positionId: positie.id, teacherId: kandidaten[k].id, soort: "AANMELDING", status: "GESELECTEERD", gereageerdOp: dagen(-3) });
+        aanmeldingen.push({ positionId: positie.id, teacherId: kandidaten[k].id, soort: "AANMELDING", status: "TOEGEWEZEN", gereageerdOp: dagen(-3) });
       }
       teSluiten.push(positie.id);
       sessieUpdates.push({ id: sessies[i].id, data: { status: "VOLLEDIG_BEZET" } });
@@ -531,7 +529,7 @@ export async function stapOpdrachten(db: PrismaClient) {
   }
 
   await db.assignment.createMany({ data: toewijzingen });
-  await db.application.createMany({ data: aanmeldingen as never });
+  await db.application.createMany({ data: aanmeldingen });
   if (teSluiten.length > 0) {
     await db.staffingPosition.updateMany({ where: { id: { in: teSluiten } }, data: { gesloten: true } });
   }
@@ -571,7 +569,7 @@ export async function stapOpdrachten(db: PrismaClient) {
   }
 
   for (const u of sessieUpdates) {
-    await db.workshopSession.update({ where: { id: u.id }, data: u.data as never });
+    await db.workshopSession.update({ where: { id: u.id }, data: u.data });
   }
 
   // Een geannuleerde opdracht voor de volledigheid
