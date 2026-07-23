@@ -1,257 +1,111 @@
-import test from "node:test";
-import assert from "node:assert/strict";
-import {
-  naarMinuten,
-  naarTijd,
-  afdelingen,
-  bouwTijdschema,
-  bouwAlleTijdschemas,
-  aantalRondes,
-  eersteTijdstip,
-  bouwBevestiging,
-  samenvatting,
-  type BevSessie,
-} from "../src/lib/bevestiging";
+# Live zetten via GitHub en Vercel
 
-/* ---------------- tijd ---------------- */
+Je hebt hier geen terminal voor nodig. Alles kan in de browser.
 
-test("tijd omrekenen werkt heen en terug", () => {
-  assert.equal(naarMinuten("09:30"), 570);
-  assert.equal(naarTijd(570), "09:30");
-  assert.equal(naarTijd(naarMinuten("14:45")), "14:45");
-});
+## 1. Database aanmaken bij Neon
 
-/* ---------------- eenvoudige dag ---------------- */
+1. Ga naar neon.com en maak een gratis account
+2. Klik op New project, naam bijvoorbeeld `skool-planning`, regio Frankfurt of Amsterdam
+3. Kopieer de connection string. Die begint met `postgresql://`
+4. Zorg dat er `?sslmode=require` achter staat. Neon geeft die meestal al zo
 
-const theatersport: BevSessie[] = [
-  {
-    workshopNaam: "Theatersport",
-    aanwezigVanaf: "11:30",
-    afbouwTot: "14:45",
-    rondes: [
-      { nummer: 1, startTijd: "12:00", eindTijd: "13:00", aantalGroepen: 2 },
-      { nummer: 2, startTijd: "13:30", eindTijd: "14:30", aantalGroepen: 2 },
-    ],
-  },
-];
+Bewaar die string even, je hebt hem straks nodig.
 
-test("een workshop met twee rondes geeft aankomst, voorbereiding, pauze en afbouw", () => {
-  const regels = bouwTijdschema(theatersport);
-  assert.deepEqual(regels, [
-    "11:30u Aankomst workshopdocent",
-    "11:30u-12:00u Voorbereiding workshopruimte",
-    "12:00u-13:00u Workshopronde 1 (2x Theatersport)",
-    "13:00u-13:30u Pauze",
-    "13:30u-14:30u Workshopronde 2 (2x Theatersport)",
-    "14:30u-14:45u Afbouw / vertrek workshopdocent",
-  ]);
-});
+## 2. Sleutel maken voor de sessies
 
-/* ---------------- cultuurdag met vier workshops ---------------- */
+Je hebt een lange geheime tekst nodig voor `AUTH_SECRET`. Minimaal 32 tekens.
+Verzin er zelf een van bijvoorbeeld 50 willekeurige tekens, of gebruik een
+wachtwoordgenerator. Deel hem met niemand.
 
-function cultuurdag(): BevSessie[] {
-  const maak = (naam: string, groepenPerRonde: number[]): BevSessie => ({
-    workshopNaam: naam,
-    aanwezigVanaf: "09:30",
-    afbouwTot: "14:45",
-    rondes: [
-      { nummer: 1, startTijd: "10:00", eindTijd: "11:00", aantalGroepen: groepenPerRonde[0] },
-      { nummer: 2, startTijd: "11:00", eindTijd: "12:00", aantalGroepen: groepenPerRonde[1] },
-      { nummer: 3, startTijd: "12:30", eindTijd: "13:30", aantalGroepen: groepenPerRonde[2] },
-      { nummer: 4, startTijd: "13:30", eindTijd: "14:30", aantalGroepen: groepenPerRonde[3] },
-    ].filter((r) => r.aantalGroepen > 0),
-  });
-  return [
-    maak("Ghetto Drums", [1, 1, 1, 0]),
-    maak("Caribbean Drums", [1, 1, 1, 1]),
-    maak("Light Graffiti", [1, 1, 1, 2]),
-    maak("Kickboksen", [1, 2, 1, 1]),
-  ];
-}
+## 3. Code naar GitHub
 
-test("meerdere workshops in één ronde komen samen op één regel", () => {
-  const regels = bouwTijdschema(cultuurdag());
-  assert.ok(regels.includes("10:00u-11:00u Workshopronde 1 (1x Ghetto Drums, 1x Caribbean Drums, 1x Light Graffiti, 1x Kickboksen)"));
-  assert.ok(regels.includes("11:00u-12:00u Workshopronde 2 (1x Ghetto Drums, 1x Caribbean Drums, 1x Light Graffiti, 2x Kickboksen)"));
-  assert.ok(regels.includes("13:30u-14:30u Workshopronde 4 (1x Caribbean Drums, 2x Light Graffiti, 1x Kickboksen)"));
-});
+1. Pak de zip uit op je computer
+2. Ga naar github.com en klik op New repository
+3. Naam bijvoorbeeld `skool-planning`, zet hem op Private, klik Create
+4. Klik op uploading an existing file
+5. Sleep de inhoud van de map erin, dus `src`, `prisma`, `public`, `docs`,
+   `package.json`, `package-lock.json` en de rest
+6. Sleep niet de map `node_modules` of `.next` mee. Die zitten ook niet in de zip
+7. Klik onderaan op Commit changes
 
-test("een pauze tussen twee rondes wordt herkend", () => {
-  const regels = bouwTijdschema(cultuurdag());
-  assert.ok(regels.includes("12:00u-12:30u Pauze"));
-});
+GitHub kan maximaal 100 bestanden per keer. Doe het in twee rondes als het klaagt.
+Upload dan eerst alles behalve `src`, en daarna `src` los.
 
-test("een workshop die eerder stopt krijgt een eigen vertrekregel", () => {
-  const regels = bouwTijdschema(cultuurdag());
-  assert.ok(regels.some((r) => r.startsWith("13:30u-") && r.includes("Ghetto Drums")));
-  assert.ok(regels.some((r) => r.startsWith("14:30u-14:45u Afbouw")));
-});
+## 4. Vercel
 
-/* ---------------- afdelingen ---------------- */
+1. Ga naar vercel.com en log in met je GitHub account
+2. Klik op Add New, dan Project
+3. Kies je repository `skool-planning` en klik Import
+4. Klap Environment Variables open en zet deze erin
 
-function metAfdelingen(): BevSessie[] {
-  return [
-    {
-      workshopNaam: "Theatersport",
-      aanwezigVanaf: "09:30",
-      rondes: [
-        { nummer: 1, startTijd: "10:00", eindTijd: "11:00", afdeling: "4VWO", aantalGroepen: 4 },
-        { nummer: 1, startTijd: "11:00", eindTijd: "12:00", afdeling: "4HAVO", aantalGroepen: 4 },
-      ],
-    },
-    {
-      workshopNaam: "Rap",
-      aanwezigVanaf: "10:45",
-      rondes: [
-        { nummer: 2, startTijd: "11:15", eindTijd: "12:15", afdeling: "4VWO", aantalGroepen: 2 },
-        { nummer: 2, startTijd: "12:15", eindTijd: "13:15", afdeling: "4HAVO", aantalGroepen: 2 },
-      ],
-    },
-  ];
-}
+| Naam | Waarde |
+| --- | --- |
+| `DATABASE_URL` | je connection string van Neon |
+| `AUTH_SECRET` | je lange geheime tekst |
+| `APP_URL` | laat leeg, vul je zo in |
+| `NOTIFY_MODE` | `dev` |
+| `SEED_TOKEN` | verzin een woord, bijvoorbeeld `skool-start-2026` |
 
-test("afdelingen worden gevonden en krijgen elk een eigen tijdschema", () => {
-  assert.deepEqual(afdelingen(metAfdelingen()), ["4HAVO", "4VWO"]);
-  const schemas = bouwAlleTijdschemas(metAfdelingen());
-  assert.equal(schemas.length, 2);
-  assert.ok(schemas.every((s) => s.regels.length > 0));
-});
+5. Klik op Deploy en wacht een paar minuten
 
-test("elk afdelingsschema gebruikt alleen de eigen tijden", () => {
-  const vwo = bouwTijdschema(metAfdelingen(), "4VWO");
-  assert.ok(vwo.includes("10:00u-11:00u Workshopronde 1 (4x Theatersport)"));
-  assert.ok(vwo.includes("11:15u-12:15u Workshopronde 2 (2x Rap)"));
-  assert.ok(!vwo.some((r) => r.includes("12:15u-13:15u")));
-});
+Tijdens het bouwen maakt Vercel automatisch alle tabellen in je database aan.
 
-test("bij verschillende aankomsttijden wordt de workshop erbij genoemd", () => {
-  const vwo = bouwTijdschema(metAfdelingen(), "4VWO");
-  assert.ok(vwo.some((r) => r.startsWith("09:30u Aankomst") && r.includes("Theatersport")));
-  assert.ok(vwo.some((r) => r.startsWith("10:45u Aankomst") && r.includes("Rap")));
-});
+## 5. APP_URL invullen
 
-/* ---------------- hulpwaarden ---------------- */
+Na de deploy krijg je een adres, bijvoorbeeld `https://skool-planning.vercel.app`.
 
-test("aantal rondes en eerste tijdstip kloppen", () => {
-  assert.equal(aantalRondes(cultuurdag()), 4);
-  assert.equal(eersteTijdstip(cultuurdag()), "10:00");
-  assert.equal(aantalRondes([]), 0);
-});
+1. Ga in Vercel naar Settings, dan Environment Variables
+2. Zet `APP_URL` op dat adres
+3. Ga naar Deployments en klik bij de bovenste op Redeploy
 
-test("samenvatting telt workshops, rondes en groepen", () => {
-  assert.equal(samenvatting(theatersport), "1 workshop, 2 rondes, 4 groepen");
-});
+## 6. Demodata inladen
 
-/* ---------------- volledige tekst ---------------- */
+Open in je browser:
 
-test("de bevestigingstekst bevat alle vaste blokken", () => {
-  const tekst = bouwBevestiging({
-    aanhef: "Lisabeth",
-    klantNaam: "De Goudse Waarden",
-    datumTekst: "01-09-2026",
-    locatieNaam: "De Goudse Waarden",
-    adresregels: ["Heemskerkstraat 105", "2805 SN Gouda"],
-    contactNaam: "Lisabeth Keizer",
-    contactTelefoon: "0647980153",
-    aantalPersonenTekst: "Maximaal 25 per workshop",
-    afzender: "Anne Bakker",
-    sessies: cultuurdag(),
-  });
+```
+https://jouw-adres.vercel.app/api/seed?token=skool-start-2026
 
-  assert.ok(tekst.startsWith("Beste Lisabeth,"));
-  assert.ok(tekst.includes("Naam workshop(s): Ghetto Drums, Caribbean Drums, Light Graffiti, Kickboksen"));
-  assert.ok(tekst.includes("Tijdstip workshop: 10:00 uur"));
-  assert.ok(tekst.includes("Aantal workshoprondes: 4"));
-  assert.ok(tekst.includes("Aantal personen: Maximaal 25 per workshop"));
-  assert.ok(tekst.includes("Heemskerkstraat 105"));
-  assert.ok(tekst.includes("Opdrachtgever: Lisabeth Keizer, 0647980153"));
-  assert.ok(tekst.includes("Skool Workshop: 085-0653923"));
-  assert.ok(tekst.includes("Tijdschema"));
-  assert.ok(tekst.includes("De factuur wordt zeven dagen voor aanvang van de workshop verstuurd."));
-  assert.ok(tekst.includes("Anne Bakker"));
-});
+Je krijgt een pagina met een voortgangsbalk en een knop naar de volgende stap.
+Het vullen gaat in zes stappen, zodat elke stap ruim binnen de tijdslimiet van
+Vercel blijft. Klik telkens door tot je "Klaar" ziet. Op het laatste scherm
+staan de inloggegevens en de toegangscodes voor de demo-inschrijving.
+```
 
-test("benodigdheden per workshop krijgen een eigen kop met de workshopnaam", () => {
-  const sessies = cultuurdag();
-  sessies[0].klantBenodigdheden = "Grote ruimte op de begane grond.";
-  sessies[1].klantBenodigdheden = "Stoelen zonder armleuningen.";
-  sessies[1].voorbeeldLink = "https://voorbeeld.example/opstelling";
-  const tekst = bouwBevestiging({
-    klantNaam: "De Goudse Waarden",
-    datumTekst: "01-09-2026",
-    sessies,
-  });
-  assert.ok(tekst.includes("Benodigdheden Ghetto Drums"));
-  assert.ok(tekst.includes("Benodigdheden Caribbean Drums"));
-  assert.ok(tekst.includes("Klik hier voor een voorbeeld: https://voorbeeld.example/opstelling"));
-});
+Gebruik het token dat je zelf hebt ingevuld. Je krijgt een melding terug met het aantal
+docenten, klanten en opdrachten dat is aangemaakt.
 
-test("bij één workshop staat er geen naam achter Benodigdheden", () => {
-  const sessies = [{ ...theatersport[0], klantBenodigdheden: "Ruime open ruimte met stoelen." }];
-  const tekst = bouwBevestiging({ klantNaam: "Veurs Lyceum", datumTekst: "01-09-2026", sessies });
-  assert.ok(tekst.includes("\nBenodigdheden\n"));
-  assert.ok(!tekst.includes("Benodigdheden Theatersport"));
-});
+Let op: dit gooit eerst alles weg wat er staat. Doe dit alleen aan het begin.
 
-test("een workshop die pas in ronde 2 start, staat niet in ronde 1", () => {
-  const sessies: BevSessie[] = [
-    {
-      workshopNaam: "Theatersport",
-      aanwezigVanaf: "09:30",
-      rondes: [
-        { nummer: 1, startTijd: "10:00", eindTijd: "11:00", aantalGroepen: 3 },
-        { nummer: 2, startTijd: "11:00", eindTijd: "12:00", aantalGroepen: 3 },
-        { nummer: 3, startTijd: "12:00", eindTijd: "13:00", aantalGroepen: 3 },
-      ],
-    },
-    {
-      workshopNaam: "Rap",
-      aanwezigVanaf: "10:30",
-      rondes: [
-        { nummer: 2, startTijd: "11:00", eindTijd: "12:00", aantalGroepen: 1 },
-        { nummer: 3, startTijd: "12:00", eindTijd: "13:00", aantalGroepen: 1 },
-        { nummer: 4, startTijd: "13:00", eindTijd: "14:00", aantalGroepen: 1 },
-      ],
-    },
-  ];
-  const regels = bouwTijdschema(sessies);
-  assert.ok(regels.includes("10:00u-11:00u Workshopronde 1 (3x Theatersport)"));
-  assert.ok(regels.includes("11:00u-12:00u Workshopronde 2 (3x Theatersport, 1x Rap)"));
-  assert.ok(regels.includes("13:00u-14:00u Workshopronde 4 (1x Rap)"));
-  // Theatersport vertrekt eerder dan Rap en krijgt een eigen regel
-  assert.ok(regels.some((r) => r.startsWith("13:00u-") && r.includes("Afbouw") && r.includes("Theatersport")));
-  assert.ok(regels.some((r) => r.startsWith("14:00u-") && r.includes("Afbouw")));
-});
+## 7. Inloggen
 
-test("de aankomsttijd van een latere workshop staat apart in het schema", () => {
-  const sessies: BevSessie[] = [
-    { workshopNaam: "Graffiti", aanwezigVanaf: "09:30", rondes: [{ nummer: 1, startTijd: "10:00", eindTijd: "11:00", aantalGroepen: 2 }] },
-    { workshopNaam: "Kickboksen", aanwezigVanaf: "10:30", rondes: [{ nummer: 2, startTijd: "11:00", eindTijd: "12:00", aantalGroepen: 1 }] },
-  ];
-  const regels = bouwTijdschema(sessies);
-  assert.ok(regels.some((r) => r.startsWith("09:30u Aankomst") && r.includes("Graffiti")));
-  assert.ok(regels.some((r) => r.startsWith("10:30u Aankomst") && r.includes("Kickboksen")));
-});
+Ga naar `https://jouw-adres.vercel.app/login`
 
-test("twee workshopdocenten op dezelfde workshop met verschillende rondes", () => {
-  // Docent 1 draait alle vier de rondes, docent 2 alleen ronde 2 en 3
-  const sessies: BevSessie[] = [
-    {
-      workshopNaam: "Caribbean Drums",
-      aanwezigVanaf: "09:30",
-      afbouwTot: "14:45",
-      rondes: [
-        { nummer: 1, startTijd: "10:00", eindTijd: "11:00", aantalGroepen: 1 },
-        { nummer: 2, startTijd: "11:00", eindTijd: "12:00", aantalGroepen: 2 },
-        { nummer: 3, startTijd: "12:30", eindTijd: "13:30", aantalGroepen: 2 },
-        { nummer: 4, startTijd: "13:30", eindTijd: "14:30", aantalGroepen: 1 },
-      ],
-    },
-  ];
-  const regels = bouwTijdschema(sessies);
-  assert.ok(regels.includes("10:00u-11:00u Workshopronde 1 (1x Caribbean Drums)"));
-  assert.ok(regels.includes("11:00u-12:00u Workshopronde 2 (2x Caribbean Drums)"));
-  assert.ok(regels.includes("12:30u-13:30u Workshopronde 3 (2x Caribbean Drums)"));
-  assert.ok(regels.includes("13:30u-14:30u Workshopronde 4 (1x Caribbean Drums)"));
-  assert.equal(aantalRondes(sessies), 4);
-});
+Wachtwoord `SkoolDemo2026!`
+
+- `planner@example.com` voor de beheerkant
+- `docent1@example.com` voor de docentkant op je telefoon
+
+## 8. Meteen daarna doen
+
+1. Ga in Vercel naar Environment Variables en maak `SEED_TOKEN` leeg
+2. Klik op Redeploy
+3. Log in als `superbeheerder@example.com`, ga naar Instellingen en maak je eigen account aan
+4. Zet daarna de demo accounts op inactief
+
+## Op je telefoon zetten
+
+Open het adres in Safari of Chrome op je telefoon, kies Delen en dan
+Zet op beginscherm. De docentkant werkt dan als een echte app.
+
+## Later een wijziging doorvoeren
+
+Upload het gewijzigde bestand opnieuw in GitHub. Vercel bouwt automatisch een
+nieuwe versie. Je hoeft verder niets te doen.
+
+## Als er iets misgaat
+
+- Build faalt op `prisma db push`: je `DATABASE_URL` klopt niet of mist `?sslmode=require`
+- Inloggen werkt niet: `AUTH_SECRET` is korter dan 32 tekens
+- Links in e-mails kloppen niet: `APP_URL` staat nog leeg of verkeerd
+- `/api/seed` meldt dat seeden uit staat: `SEED_TOKEN` staat leeg of het token in de link klopt niet
+- `/api/seed` geeft een timeout: open de stap opnieuw, hij pakt hem daarna weer op
