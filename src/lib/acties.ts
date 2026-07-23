@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { verwijderSessie, huidigeGebruiker } from "@/lib/auth";
 import { db } from "@/lib/db";
 
+// PUBLIEK: uitloggen mag altijd, het wist alleen de eigen sessiecookie
 export async function uitloggen() {
   verwijderSessie();
   redirect("/login");

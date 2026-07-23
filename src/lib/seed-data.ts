@@ -6,7 +6,7 @@
  * Het vullen is opgesplitst in stappen. Elke stap is klein genoeg om binnen
  * de tijdslimiet van een serverless functie af te ronden.
  */
-import type { PrismaClient, DocType } from "@prisma/client";
+import type { PrismaClient, DocType, Doelgroep } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { maakCodes } from "./inschrijving";
 import { CATALOGUS, CATEGORIE_KLEUR, MAX_DEELNEMERS } from "./workshops-catalogus";
@@ -47,10 +47,11 @@ const WORKSHOPS_DATA = CATALOGUS.map((w) => ({
   docs: (w.categorie === "Media" || w.naam.includes("Zelfverdediging") || w.naam.includes("Kickboksen")
     ? ["VOG", "CERTIFICAAT"]
     : ["VOG"]) as DocType[],
-  doelgroepen:
-    w.minLeeftijd <= 6 ? ["Onderbouw PO", "Bovenbouw PO", "BSO"] :
-    w.minLeeftijd <= 10 ? ["Bovenbouw PO", "VO"] :
-    ["VO", "MBO", "Volwassenen"],
+  doelgroepen: (w.minLeeftijd <= 6
+    ? ["PRIMAIR_ONDERWIJS", "BUITENSCHOOLSE_OPVANG"]
+    : w.minLeeftijd <= 10
+      ? ["PRIMAIR_ONDERWIJS", "VOORTGEZET_ONDERWIJS"]
+      : ["VOORTGEZET_ONDERWIJS", "MBO", "VOLWASSENEN"]) as Doelgroep[],
   materialen: w.materialen,
   maxGroep: MAX_DEELNEMERS,
   minLeeftijd: w.minLeeftijd,
@@ -251,7 +252,7 @@ export async function stapDocenten(db: PrismaClient) {
         rijbewijs: i % 4 !== 0,
         ovMogelijk: true,
         talen: i % 3 === 0 ? ["Nederlands", "Engels"] : ["Nederlands"],
-        doelgroepen: ["Bovenbouw PO", "VO"],
+        doelgroepen: ["PRIMAIR_ONDERWIJS", "VOORTGEZET_ONDERWIJS"] as Doelgroep[],
         status: status as never,
         goedgekeurdOp: status === "GOEDGEKEURD" ? dagen(-120 + i) : null,
       };
@@ -260,7 +261,7 @@ export async function stapDocenten(db: PrismaClient) {
 
   const docenten = await leesDocenten(db);
 
-  const skills: { teacherId: string; workshopId: string; niveau: number }[] = [];
+  const skills: { teacherId: string; workshopId: string; bevoegdheid: never }[] = [];
   const documenten: Record<string, unknown>[] = [];
   const beschikbaar: { teacherId: string; weekdag: number; beschikbaar: boolean }[] = [];
 
@@ -269,7 +270,7 @@ export async function stapDocenten(db: PrismaClient) {
     const t = docenten[i];
 
     for (const w of d.ws) {
-      skills.push({ teacherId: t.id, workshopId: workshops[w].id, niveau: ((i + w) % 3) + 1 });
+      skills.push({ teacherId: t.id, workshopId: workshops[w].id, bevoegdheid: (i === 9 && w === d.ws[2] ? "ASSISTEREN" : "ZELFSTANDIG") as never });
     }
 
     documenten.push({
@@ -277,8 +278,8 @@ export async function stapDocenten(db: PrismaClient) {
       type: "VOG",
       bestandsnaam: "vog.pdf",
       uploadedAt: dagen(-200),
-      vervaldatum: i === 3 ? dagen(-14) : dagen(400 + i),
-      status: i === 3 ? "VERLOPEN" : i === 8 ? "IN_BEHANDELING" : "GOEDGEKEURD",
+      vervaldatum: null, // een VOG verloopt niet
+      status: i === 8 ? "IN_BEHANDELING" : "GOEDGEKEURD",
       verplicht: true,
     });
     if (i !== 5) {
@@ -408,7 +409,7 @@ export async function stapOpdrachten(db: PrismaClient) {
       aanwezigVanaf: start === "09:00" ? "08:30" : "12:45",
       deelnemers: 20 + (i % 4) * 5,
       leeftijd: kies(["8 tot 10 jaar", "10 tot 12 jaar", "12 tot 15 jaar", "15 tot 18 jaar"], i),
-      doelgroep: kies(["Bovenbouw PO", "VO", "MBO"], i),
+      doelgroep: kies(["PRIMAIR_ONDERWIJS", "VOORTGEZET_ONDERWIJS", "MBO"] as Doelgroep[], i),
       aantalRondes: (i % 3) + 1,
       tijdPerRonde: workshop.standaardDuur,
       ruimte: kies(["Gymzaal", "Aula", "Lokaal 2.14", "Speellokaal"], i),
@@ -703,7 +704,7 @@ async function voorbeelddag(
         aanwezigVanaf: onderdeel.aanwezigVanaf,
         afbouwTot: onderdeel.afbouwTot,
         deelnemers: 25 * maxGroepen,
-        doelgroep: "VO",
+        doelgroep: "VOORTGEZET_ONDERWIJS" as Doelgroep,
         aantalRondes: onderdeel.rondes.length,
         tijdPerRonde: w.standaardDuur,
         vergoeding: w.standaardVergoeding as never,

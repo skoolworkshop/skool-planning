@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { vereisRol, ipAdres } from "@/lib/auth";
 import { PLANNEN, BEHEER } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
+import { isDoelgroep } from "@/lib/doelgroepen";
 
 const TIJD = /^\d{2}:\d{2}$/;
 
@@ -96,8 +97,8 @@ export async function rondesOpslaan(
     nieuw: { rondes: lijst.length, maxGroepen },
     ip: ipAdres(),
   });
-  revalidatePath(`/beheer/opdrachten/${sessionId}`);
-  revalidatePath(`/beheer/projecten/${sessie.projectId}`);
+  revalidatePath(`/beheer/opdrachten/moment/${sessionId}`);
+  revalidatePath(`/beheer/opdrachten/${sessie.projectId}`);
   return { ok: true, rondes: lijst.length, docentenNodig: maxGroepen };
 }
 
@@ -148,7 +149,7 @@ export async function workshopToevoegen(projectId: string, workshopId: string) {
   });
 
   await logAudit({ userId: u.id, actie: "WORKSHOP_TOEGEVOEGD", entiteit: "Project", entiteitId: projectId, nieuw: { workshop: workshop.naam }, ip: ipAdres() });
-  revalidatePath(`/beheer/projecten/${projectId}`);
+  revalidatePath(`/beheer/opdrachten/${projectId}`);
   return { ok: true, id: sessie.id };
 }
 
@@ -165,7 +166,7 @@ export async function workshopVerwijderen(sessionId: string) {
 
   await db.workshopSession.delete({ where: { id: sessionId } });
   await logAudit({ userId: u.id, actie: "WORKSHOP_VERWIJDERD", entiteit: "Project", entiteitId: sessie.projectId, ip: ipAdres() });
-  revalidatePath(`/beheer/projecten/${sessie.projectId}`);
+  revalidatePath(`/beheer/opdrachten/${sessie.projectId}`);
   return { ok: true };
 }
 
@@ -173,7 +174,7 @@ export async function workshopVerwijderen(sessionId: string) {
 export async function projectTekstOpslaan(projectId: string, aantalPersonenTekst: string) {
   await vereisRol(...PLANNEN);
   await db.project.update({ where: { id: projectId }, data: { aantalPersonenTekst: aantalPersonenTekst.trim() || null } });
-  revalidatePath(`/beheer/projecten/${projectId}`);
+  revalidatePath(`/beheer/opdrachten/${projectId}`);
   return { ok: true };
 }
 
@@ -187,7 +188,8 @@ export async function klantGegevensOpslaan(clientId: string, formData: FormData)
   await db.client.update({
     where: { id: clientId },
     data: {
-      doelgroep: String(formData.get("doelgroep") ?? "").trim() || null,
+      doelgroepen: formData.getAll("doelgroepen").map(String).filter(isDoelgroep),
+      doelgroepToelichting: String(formData.get("doelgroepToelichting") ?? "").trim() || null,
       cjpNummer: cjp || null,
       factuurEmail: String(formData.get("factuurEmail") ?? "").trim() || null,
       factuurAdres: String(formData.get("factuurAdres") ?? "").trim() || null,
@@ -215,84 +217,32 @@ export async function workshopTekstOpslaan(workshopId: string, formData: FormDat
 }
 
 /**
- * Haalt van elke workshop de foto op van skoolworkshop.nl.
- * Leest de og:image uit de pagina die bij de siteSlug hoort.
- * Draai dit opnieuw zodra je op de site andere foto's plaatst.
+ * Zet wat een workshopdocent met een workshop mag.
+ * Alleen een beheerder bepaalt dit, een workshopdocent nooit zelf.
  */
-export async function afbeeldingenOphalen() {
-  await vereisRol(...BEHEER);
-  const workshops = await db.workshop.findMany({ where: { siteSlug: { not: null } }, select: { id: true, naam: true, siteSlug: true } });
-
-  let gelukt = 0;
-  const mislukt: string[] = [];
-
-  await Promise.all(
-    workshops.map(async (w) => {
-      const url = `https://skoolworkshop.nl/workshops/${w.siteSlug}/`;
-      try {
-        const res = await fetch(url, {
-          headers: { "user-agent": "SkoolWorkshopPlanning/1.0" },
-          next: { revalidate: 0 },
-        });
-        if (!res.ok) {
-          mislukt.push(w.naam);
-          return;
-        }
-        const html = await res.text();
-        const m =
-          /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i.exec(html) ??
-          /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i.exec(html);
-        if (!m) {
-          mislukt.push(w.naam);
-          return;
-        }
-        await db.workshop.update({ where: { id: w.id }, data: { afbeeldingUrl: m[1] } });
-        gelukt++;
-      } catch {
-        mislukt.push(w.naam);
-      }
-    })
-  );
-
-  revalidatePath("/beheer/workshops");
-  return { ok: true, gelukt, mislukt };
-}
-
-/** Handmatig een afbeelding instellen, bijvoorbeeld als de site tijdelijk plat ligt. */
-export async function afbeeldingInstellen(workshopId: string, url: string) {
-  await vereisRol(...BEHEER);
-  await db.workshop.update({ where: { id: workshopId }, data: { afbeeldingUrl: url.trim() || null } });
-  revalidatePath("/beheer/workshops");
-  return { ok: true };
-}
-
-/**
- * Zet het persoonlijke tarief van een workshopdocent.
- * Leeg laten betekent: gebruik het standaardtarief uit de instellingen.
- */
-export async function docentTariefOpslaan(teacherId: string, formData: FormData) {
+export async function bevoegdheidZetten(teacherId: string, workshopId: string, bevoegdheid: "ZELFSTANDIG" | "ASSISTEREN" | "NIET_INZETBAAR" | "GEEN") {
   const u = await vereisRol(...BEHEER);
   const teacher = await db.teacherProfile.findUnique({ where: { id: teacherId } });
   if (!teacher) return { fout: "Deze workshopdocent bestaat niet." };
 
-  const getal = (naam: string) => {
-    const ruw = formData.get(naam);
-    if (ruw === null || String(ruw).trim() === "") return null;
-    const n = Number(String(ruw).replace(",", "."));
-    return Number.isFinite(n) && n >= 0 ? n : null;
-  };
+  if (bevoegdheid === "GEEN") {
+    await db.teacherWorkshopSkill.deleteMany({ where: { teacherId, workshopId } });
+  } else {
+    await db.teacherWorkshopSkill.upsert({
+      where: { teacherId_workshopId: { teacherId, workshopId } },
+      create: { teacherId, workshopId, bevoegdheid, gezetDoor: u.id, gezetOp: new Date() },
+      update: { bevoegdheid, gezetDoor: u.id, gezetOp: new Date() },
+    });
+  }
 
-  await db.teacherProfile.update({
-    where: { id: teacherId },
-    data: {
-      uurtarief: getal("uurtarief"),
-      minDagtarief: getal("minDagtarief"),
-      kmVergoeding: getal("kmVergoeding"),
-      maxReisAfstand: getal("maxReisAfstand") ? Math.round(getal("maxReisAfstand")!) : null,
-    },
+  await logAudit({
+    userId: u.id,
+    actie: "BEVOEGDHEID_AANGEPAST",
+    entiteit: "TeacherWorkshopSkill",
+    entiteitId: teacherId,
+    nieuw: { workshopId, bevoegdheid },
+    ip: ipAdres(),
   });
-
-  await logAudit({ userId: u.id, actie: "TARIEF_AANGEPAST", entiteit: "TeacherProfile", entiteitId: teacherId, ip: ipAdres() });
   revalidatePath(`/beheer/docenten/${teacherId}`);
   return { ok: true };
 }

@@ -45,27 +45,24 @@ export const TEMPLATES: Record<string, { onderwerp: string; tekst: string }> = {
     tekst: "Hi {{voornaam}}, je aanmelding voor {{workshop}} op {{datum}} is ontvangen. Je hoort snel van ons.",
   },
   GESELECTEERD: {
-    onderwerp: "Je bent ingepland",
+    onderwerp: "Je bent definitief ingepland",
     tekst:
-      "Hi {{voornaam}}, goed nieuws. Je bent ingepland voor:\n\n" +
-      "{{workshop}}\n{{datum}} van {{starttijd}} tot {{eindtijd}}\nPlaats: {{plaats}}\nVergoeding: {{vergoeding}}\n\n" +
-      "Alle details staan hier:\n{{link}}",
+      "Hi {{voornaam}},\n\nJe bent definitief ingepland voor de volgende opdracht:\n\n" +
+      "Workshop: {{workshop}}\nDatum: {{datum}}\nTijd: {{starttijd}} tot {{eindtijd}}\nPlaats: {{plaats}}\nVergoeding: {{vergoeding}}\n\n" +
+      "Bekijk alle opdrachtinformatie:\n{{link}}\n\n" +
+      "Je hoeft niets te bevestigen. Lukt het onverhoopt niet? Laat het ons zo snel mogelijk weten.",
   },
   AFGEWEZEN: {
     onderwerp: "Update over je aanmelding",
     tekst: "Hi {{voornaam}}, voor {{workshop}} op {{datum}} hebben we iemand anders ingepland. Bedankt voor je aanmelding.",
-  },
-  RESERVELIJST: {
-    onderwerp: "Je staat op de reservelijst",
-    tekst: "Hi {{voornaam}}, je staat op de reservelijst voor {{workshop}} op {{datum}}. We laten het weten als er iets vrijkomt.",
   },
   OPDRACHT_GEANNULEERD: {
     onderwerp: "Opdracht geannuleerd",
     tekst: "Hi {{voornaam}}, {{workshop}} op {{datum}} is helaas geannuleerd.",
   },
   OPDRACHT_GEWIJZIGD: {
-    onderwerp: "Opdracht gewijzigd, graag opnieuw bevestigen",
-    tekst: "Hi {{voornaam}}, er is iets gewijzigd aan {{workshop}} op {{datum}}. Bekijk en bevestig opnieuw:\n{{link}}",
+    onderwerp: "Er is iets gewijzigd aan je opdracht",
+    tekst: "Hi {{voornaam}}, er is iets gewijzigd aan {{workshop}} op {{datum}}. Bekijk de nieuwe gegevens:\n{{link}}",
   },
   HERINNERING_OPDRACHT: {
     onderwerp: "Herinnering: opdracht binnenkort",
@@ -80,6 +77,8 @@ export const TEMPLATES: Record<string, { onderwerp: string; tekst: string }> = {
     tekst: "Hi {{voornaam}}, je declaratie voor {{workshop}} op {{datum}} is goedgekeurd. Totaal: {{bedrag}}.",
   },
   DOCUMENT_VERLOOPT: {
+    // Let op: een VOG verloopt niet. Dit bericht geldt alleen voor documenten
+    // die wel een vervaldatum kennen, zie src/lib/documenten.ts
     onderwerp: "Een document verloopt binnenkort",
     tekst: "Hi {{voornaam}}, je {{document}} verloopt op {{datum}}. Upload een nieuwe versie in je profiel.\n{{link}}",
   },

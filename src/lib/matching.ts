@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "./db";
 import { afstandKm, reistijdMin } from "./format";
+import { isGeldig } from "@/lib/documenten";
 
 export type MatchResultaat = {
   teacherId: string;
@@ -64,13 +65,16 @@ export async function matchDocenten(positionId: string): Promise<MatchResultaat[
 
     // Vaardigheid
     const skill = d.skills.find((s) => s.workshopId === sessie.workshopId);
-    if (skill) {
-      score += 35 + skill.niveau * 5;
-      redenen.push(skill.niveau >= 3 ? "Expert in deze workshop" : "Geeft deze workshop");
-      if (!skill.zelfstandig && positie.rol !== "ASSISTENT") {
-        waarschuwingen.push("Alleen inzetbaar als assistent");
-        score -= 20;
+    if (skill && skill.bevoegdheid !== "NIET_INZETBAAR") {
+      score += skill.bevoegdheid === "ZELFSTANDIG" ? 50 : 30;
+      redenen.push(skill.bevoegdheid === "ZELFSTANDIG" ? "Mag deze workshop zelfstandig geven" : "Mag assisteren bij deze workshop");
+      if (skill.bevoegdheid === "ASSISTEREN" && positie.rol !== "ASSISTENT") {
+        waarschuwingen.push("Mag deze workshop alleen assisteren");
+        blokkerend = true;
       }
+    } else if (skill) {
+      waarschuwingen.push("Niet inzetbaar voor deze workshop");
+      blokkerend = true;
     } else {
       waarschuwingen.push("Workshop staat niet in het profiel");
       blokkerend = true;
@@ -79,7 +83,7 @@ export async function matchDocenten(positionId: string): Promise<MatchResultaat[
     // Documenten
     const documentenOk = [...vereist].every((t) => {
       const doc = d.documents.find((x) => x.type === t);
-      return doc && doc.status === "GOEDGEKEURD" && (!doc.vervaldatum || doc.vervaldatum > nu);
+      return isGeldig(doc, nu);
     });
     if (documentenOk) {
       score += 10;

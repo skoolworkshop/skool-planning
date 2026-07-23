@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
+import { isDoelgroep } from "@/lib/doelgroepen";
 import { vereisRol, ipAdres } from "@/lib/auth";
 import { PLANNEN } from "@/lib/rbac";
 import { logAudit } from "@/lib/audit";
@@ -28,6 +29,7 @@ const SessieSchema = z.object({
   deelnemers: z.number().default(0),
   leeftijd: z.string().optional(),
   doelgroep: z.string().optional(),
+  doelgroepToelichting: z.string().optional(),
   ruimte: z.string().optional(),
   vergoeding: z.number().default(0),
   aantalDocenten: z.number().min(1).default(1),
@@ -105,7 +107,8 @@ export async function projectAanmaken(invoer: ProjectInvoer) {
           afbouwTot: s.afbouwTot || null,
           deelnemers: s.deelnemers,
           leeftijd: s.leeftijd || null,
-          doelgroep: s.doelgroep || null,
+          doelgroep: isDoelgroep(s.doelgroep ?? "") ? (s.doelgroep as never) : null,
+          doelgroepToelichting: s.doelgroepToelichting || null,
           aantalRondes: Math.max(1, s.rondes.length),
           ruimte: s.ruimte || null,
           benodigdheden: s.benodigdheden || null,
@@ -145,7 +148,7 @@ export async function projectAanmaken(invoer: ProjectInvoer) {
   });
 
   await logAudit({ userId: u.id, actie: "PROJECT_AANGEMAAKT", entiteit: "Project", entiteitId: project.id, nieuw: { ordernummer, sessies: d.sessies.length }, ip: ipAdres() });
-  revalidatePath("/beheer/projecten");
+  revalidatePath("/beheer/opdrachten");
   revalidatePath("/beheer/opdrachten");
   return { ok: true, id: project.id, ordernummer };
 }

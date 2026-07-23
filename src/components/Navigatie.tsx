@@ -31,8 +31,8 @@ export function DesktopNav({
             href={i.href}
             onClick={() => setOpen(false)}
             aria-current={actief ? "page" : undefined}
-            className={`flex min-h-[42px] items-center gap-3 rounded-lg px-3 text-sm font-medium transition ${
-              actief ? "bg-skool-50 text-skool-700" : "text-neutral-700 hover:bg-neutral-100"
+            className={`flex min-h-[42px] items-center gap-3 rounded-xl px-3 text-sm font-medium transition ${
+              actief ? "bg-skool-50 text-skool-700" : "text-zand-600 hover:bg-zand-100"
             }`}
           >
             <span aria-hidden className="w-5 text-center text-base">{i.icoon}</span>
@@ -49,7 +49,7 @@ export function DesktopNav({
   return (
     <>
       {/* Mobiele topbalk */}
-      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-zand-300 bg-white px-4 py-3 lg:hidden">
+      <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-zand-200 bg-white/90 px-4 py-3 backdrop-blur lg:hidden">
         <button onClick={() => setOpen(!open)} className="knop-secundair px-3" aria-expanded={open} aria-label="Menu">
           ☰
         </button>
@@ -57,7 +57,7 @@ export function DesktopNav({
         <img src="/logo.png" alt="Skool Workshop" className="h-6 w-auto" />
       </header>
       {open && (
-        <div className="border-b border-zand-300 bg-white p-3 lg:hidden">
+        <div className="border-b border-zand-200 bg-white p-3 lg:hidden">
           {links}
           <form action={uitloggen} className="mt-2">
             <button className="knop-ghost w-full justify-start">Uitloggen</button>
@@ -66,13 +66,13 @@ export function DesktopNav({
       )}
 
       {/* Desktop zijbalk */}
-      <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-zand-300 bg-white p-3 lg:flex">
+      <aside className="fixed inset-y-0 left-0 hidden w-60 flex-col border-r border-zand-200 bg-white p-3 lg:flex">
         <Link href="/beheer" className="mb-4 flex items-center gap-2 px-2 py-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/logo.png" alt="Skool Workshop" className="h-8 w-auto" />
         </Link>
         {links}
-        <div className="mt-auto border-t border-neutral-200 pt-3">
+        <div className="mt-auto border-t border-zand-200 pt-3">
           <div className="px-3 pb-2 text-xs">
             <div className="font-semibold">{naam}</div>
             <div className="text-zand-500">{rol}</div>
@@ -90,7 +90,7 @@ export function MobielNav({ items, ongelezen }: { items: NavItem[]; ongelezen: n
   const pad = usePathname();
   return (
     <nav
-      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-zand-300 bg-white pb-[env(safe-area-inset-bottom)]"
+      className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-zand-200 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"
       aria-label="Hoofdnavigatie"
     >
       {items.map((i) => {

@@ -295,6 +295,7 @@ export async function restVerdelen(enrollmentId: string): Promise<{ ok?: boolean
 
 /* ====================== Leerling ====================== */
 
+// PUBLIEK: leerling komt binnen met een toegangscode, geen account
 export async function codeControleren(invoer: string) {
   const code = normaliseerCode(invoer);
   if (code.length < 4) return { fout: "Vul je volledige code in." };
@@ -334,6 +335,7 @@ export async function codeControleren(invoer: string) {
   return { ok: true, enrollmentId: gevonden.enrollmentId, code: gevonden.code };
 }
 
+// PUBLIEK: leest de toegangscode uit de cookie van de leerling
 export async function leerlingSessie() {
   const code = cookies().get(LEERLING_COOKIE)?.value;
   if (!code) return null;
@@ -345,12 +347,14 @@ export async function leerlingSessie() {
   return gevonden;
 }
 
+// PUBLIEK: leerling wist zijn eigen cookie
 export async function leerlingAfmelden() {
   cookies().delete(LEERLING_COOKIE);
   return { ok: true };
 }
 
 /** Koppelt de bezoeker aan een leerling, of maakt er een aan als de school geen lijst had. */
+// PUBLIEK: leerling kiest zichzelf uit de klaslijst na een geldige code
 export async function leerlingKiezen(participantId: string) {
   const sessie = await leerlingSessie();
   if (!sessie) return { fout: "Je sessie is verlopen. Vul je code opnieuw in." };
@@ -360,6 +364,7 @@ export async function leerlingKiezen(participantId: string) {
   return { ok: true };
 }
 
+// PUBLIEK: leerling voegt zichzelf toe na een geldige code
 export async function leerlingAanmelden(formData: FormData) {
   const sessie = await leerlingSessie();
   if (!sessie) return { fout: "Je sessie is verlopen. Vul je code opnieuw in." };
@@ -390,6 +395,7 @@ export async function leerlingAanmelden(formData: FormData) {
   return { ok: true, participantId: p.id };
 }
 
+// PUBLIEK: leest de leerling uit de cookie
 export async function huidigeLeerling() {
   const sessie = await leerlingSessie();
   if (!sessie) return null;
@@ -406,6 +412,7 @@ export async function huidigeLeerling() {
  * De capaciteitscontrole en het wegschrijven gebeuren in één transactie,
  * zodat twee leerlingen nooit tegelijk de laatste plek kunnen pakken.
  */
+// PUBLIEK: leerling legt zijn eigen keuze vast, beveiligd via de code in de cookie
 export async function keuzeVastleggen(slotId: string) {
   const sessie = await leerlingSessie();
   const leerling = await huidigeLeerling();
@@ -468,6 +475,7 @@ export async function keuzeVastleggen(slotId: string) {
   }
 }
 
+// PUBLIEK: leerling legt zijn eigen voorkeuren vast, beveiligd via de code in de cookie
 export async function voorkeurenVastleggen(roundId: string, slotIds: string[]) {
   const sessie = await leerlingSessie();
   const leerling = await huidigeLeerling();

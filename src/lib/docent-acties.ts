@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { vereisGebruiker, ipAdres } from "@/lib/auth";
 import { logAudit } from "@/lib/audit";
+import { isGeldig } from "@/lib/documenten";
+import { isDoelgroep } from "@/lib/doelgroepen";
 import { berekenVergoeding } from "@/lib/tarieven";
 import { haalTarieven } from "@/lib/tarief-acties";
 import { meld } from "@/lib/notify";
@@ -18,8 +20,14 @@ async function mijnProfiel() {
   return { user: u, teacher: t };
 }
 
-/** Controleert of een docent deze opdracht mag zien en aannemen. */
-export async function magOpdracht(teacherId: string, sessionId: string) {
+/**
+ * Controleert of de ingelogde workshopdocent deze opdracht mag zien en aannemen.
+ * De workshopdocent komt altijd uit de sessie, nooit uit een meegegeven id,
+ * anders zou iemand met een API-call over een ander profiel kunnen vragen.
+ */
+export async function magOpdracht(sessionId: string) {
+  const { teacher } = await mijnProfiel();
+  const teacherId = teacher.id;
   const [t, s] = await Promise.all([
     db.teacherProfile.findUnique({ where: { id: teacherId }, include: { skills: true, documents: true } }),
     db.workshopSession.findUnique({ where: { id: sessionId }, include: { workshop: true, positions: true } }),
@@ -33,7 +41,7 @@ export async function magOpdracht(teacherId: string, sessionId: string) {
   const vereist = new Set(s.workshop.vereisteDocumenten);
   for (const type of vereist) {
     const doc = t.documents.find((d) => d.type === type);
-    if (!doc || doc.status !== "GOEDGEKEURD" || (doc.vervaldatum && doc.vervaldatum < nu)) {
+    if (!isGeldig(doc, nu)) {
       return { mag: false, reden: "Er ontbreekt een verplicht document in je profiel." };
     }
   }
@@ -49,7 +57,7 @@ export async function aanmelden(positionId: string, motivatie?: string) {
   if (!pos) return { fout: "Positie niet gevonden." };
   if (!pos.gepubliceerd || pos.gesloten) return { fout: "Deze opdracht staat niet meer open." };
 
-  const check = await magOpdracht(teacher.id, pos.sessionId);
+  const check = await magOpdracht(pos.sessionId);
   if (!check.mag) return { fout: check.reden };
 
   // Dubbele boeking bij de docent zelf voorkomen
@@ -118,12 +126,12 @@ export async function uitnodigingBeantwoorden(applicationId: string, akkoord: bo
     return { ok: true };
   }
 
-  const bezet = a.position.assignments.filter((x) => !x.reserve && !x.uitgevallen).length;
+  const bezet = a.position.assignments.filter((x) => !x.uitgevallen).length;
   if (bezet >= a.position.aantal) return { fout: "Deze plek is inmiddels vergeven." };
 
   await db.$transaction(async (tx) => {
-    await tx.application.update({ where: { id: applicationId }, data: { status: "BEVESTIGD", gereageerdOp: new Date() } });
-    await tx.assignment.create({ data: { positionId: a.positionId, teacherId: teacher.id, bevestigd: true, bevestigdOp: new Date() } });
+    await tx.application.update({ where: { id: applicationId }, data: { status: "TOEGEWEZEN", gereageerdOp: new Date() } });
+    await tx.assignment.create({ data: { positionId: a.positionId, teacherId: teacher.id, toegewezenOp: new Date() } });
     if (bezet + 1 >= a.position.aantal) {
       await tx.staffingPosition.update({ where: { id: a.positionId }, data: { gesloten: true } });
     }
@@ -134,20 +142,6 @@ export async function uitnodigingBeantwoorden(applicationId: string, akkoord: bo
   revalidatePath("/docent/mijn");
   return { ok: true };
 }
-
-export async function opdrachtBevestigen(assignmentId: string) {
-  const { user, teacher } = await mijnProfiel();
-  const a = await db.assignment.findUnique({ where: { id: assignmentId } });
-  if (!a || a.teacherId !== teacher.id) return { fout: "Opdracht niet gevonden." };
-  await db.assignment.update({ where: { id: assignmentId }, data: { bevestigd: true, bevestigdOp: new Date() } });
-  await logAudit({ userId: user.id, actie: "OPDRACHT_BEVESTIGD", entiteit: "Assignment", entiteitId: assignmentId, ip: ipAdres() });
-  revalidatePath("/docent/mijn");
-  return { ok: true };
-}
-
-/* ------------------------------------------------------------------ */
-/* Werkregistratie                                                     */
-/* ------------------------------------------------------------------ */
 
 export async function werkregistratieIndienen(assignmentId: string, formData: FormData) {
   const { user, teacher } = await mijnProfiel();
@@ -242,7 +236,6 @@ export async function profielOpslaan(formData: FormData): Promise<{ ok?: boolean
       achternaam: tekst("achternaam") ?? teacher.achternaam,
       telefoon: tekst("telefoon"),
       geboortedatum: formData.get("geboortedatum") ? new Date(String(formData.get("geboortedatum"))) : null,
-      bio: tekst("bio"),
       noodcontact: tekst("noodcontact"),
       noodcontactTel: tekst("noodcontactTel"),
       straat: tekst("straat"),
@@ -254,15 +247,12 @@ export async function profielOpslaan(formData: FormData): Promise<{ ok?: boolean
       btwNummer: tekst("btwNummer"),
       iban: tekst("iban"),
       rekeninghouder: tekst("rekeninghouder"),
-      uurtarief: getal("uurtarief"),
-      minDagtarief: getal("minDagtarief"),
-      kmVergoeding: getal("kmVergoeding"),
       maxReisAfstand: getal("maxReisAfstand"),
       eigenVervoer: formData.get("eigenVervoer") === "on",
       rijbewijs: formData.get("rijbewijs") === "on",
       ovMogelijk: formData.get("ovMogelijk") === "on",
       talen: String(formData.get("talen") ?? "").split(",").map((s) => s.trim()).filter(Boolean),
-      doelgroepen: formData.getAll("doelgroepen").map(String),
+      doelgroepen: formData.getAll("doelgroepen").map(String).filter(isDoelgroep),
     },
   });
 
@@ -287,21 +277,6 @@ export async function profielTerBeoordeling() {
   return { ok: true };
 }
 
-export async function workshopKoppelen(workshopId: string, aan: boolean, niveau = 2) {
-  const { user, teacher } = await mijnProfiel();
-  if (aan) {
-    await db.teacherWorkshopSkill.upsert({
-      where: { teacherId_workshopId: { teacherId: teacher.id, workshopId } },
-      create: { teacherId: teacher.id, workshopId, niveau },
-      update: { niveau },
-    });
-  } else {
-    await db.teacherWorkshopSkill.deleteMany({ where: { teacherId: teacher.id, workshopId } });
-  }
-  revalidatePath("/docent/profiel");
-  return { ok: true };
-}
-
 export async function beschikbaarheidZetten(datumIso: string, beschikbaar: boolean) {
   const { teacher } = await mijnProfiel();
   const d = new Date(datumIso);
@@ -311,7 +286,7 @@ export async function beschikbaarheidZetten(datumIso: string, beschikbaar: boole
 
   await db.availability.deleteMany({ where: { teacherId: teacher.id, datum: { gte: dagStart, lt: dagEind } } });
   await db.availability.create({ data: { teacherId: teacher.id, datum: d, beschikbaar } });
-  revalidatePath("/docent/kalender");
+
   return { ok: true };
 }
 
