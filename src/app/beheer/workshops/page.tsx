@@ -4,6 +4,7 @@ import { PaginaKop, Kaart, Badge } from "@/components/ui";
 import { euro, label } from "@/lib/format";
 import Benodigdheden from "./Benodigdheden";
 import Koppeling from "./Koppeling";
+import Prijs from "./Prijs";
 import Afbeeldingen from "./Afbeeldingen";
 
 export const dynamic = "force-dynamic";
@@ -57,14 +58,21 @@ export default async function WorkshopsPagina() {
                   <dl className="mt-3 space-y-1 text-xs text-zand-500">
                     <div className="flex justify-between"><dt>Duur</dt><dd>{w.standaardDuur} minuten</dd></div>
                     <div className="flex justify-between"><dt>Maximale groep</dt><dd>{w.maxGroep}</dd></div>
-                    <div className="flex justify-between"><dt>Standaardvergoeding</dt><dd>{euro(w.standaardVergoeding)}</dd></div>
+                    <div className="flex justify-between"><dt>Verkoopprijs per 60 min</dt><dd className="font-medium text-zand-700">{w.verkoopprijs ? euro(w.verkoopprijs) : "Niet ingevuld"}</dd></div>
+                    <div className="flex justify-between"><dt>Kosten workshopdocent</dt><dd>{euro(w.standaardVergoeding)}</dd></div>
+                    {w.verkoopprijs && (
+                      <div className="flex justify-between text-emerald-700"><dt>Marge per ronde</dt><dd>{euro(Number(w.verkoopprijs) - Number(w.standaardVergoeding))}</dd></div>
+                    )}
                     <div className="flex justify-between"><dt>Workshopdocenten met deze workshop</dt><dd>{w._count.skills}</dd></div>
                     <div className="flex justify-between"><dt>Ingepland</dt><dd>{w._count.sessions}x</dd></div>
                   </dl>
                   {w.vereisteDocumenten.length > 0 && (
                     <p className="mt-2 text-xs text-amber-700">Vereist: {w.vereisteDocumenten.map(label).join(", ")}</p>
                   )}
-                  <div className="mt-2 border-t border-zand-200 pt-2">
+                  <div className="mt-2 flex justify-end">
+                    <Prijs workshopId={w.id} prijs={w.verkoopprijs ? String(w.verkoopprijs) : ""} />
+                  </div>
+                  <div className="mt-2 border-t border-zand-200 pt-3">
                     <Koppeling workshopId={w.id} slug={w.siteSlug ?? ""} controle={w.afbeeldingControle || !w.afbeeldingUrl} />
                   </div>
                   <Benodigdheden

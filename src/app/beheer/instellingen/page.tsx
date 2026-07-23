@@ -4,8 +4,9 @@ import { ROL_LABEL } from "@/lib/rbac";
 import { notifyDevMode, TEMPLATES } from "@/lib/notify";
 import { PaginaKop, Kaart, Badge, Melding } from "@/components/ui";
 import TarievenFormulier from "./Tarieven";
+import Verkoop from "./Verkoop";
 import Migratie from "./Migratie";
-import { haalTarieven } from "@/lib/tarief-acties";
+import { haalTarieven, haalVerkooptarieven } from "@/lib/tarief-acties";
 import { datumTijd, label } from "@/lib/format";
 import { uitloggenOveral } from "@/lib/acties";
 import Medewerkers from "./Medewerkers";
@@ -30,6 +31,12 @@ export default async function InstellingenPagina() {
         <h2 className="mb-1 font-semibold">Tarieven workshopdocenten</h2>
         <p className="mb-4 text-sm text-zand-500">Deze bedragen gelden voor alle nieuwe berekeningen.</p>
         <TarievenFormulier tarieven={await haalTarieven()} />
+      </Kaart>
+
+      <Kaart className="mb-5">
+        <h2 className="mb-1 font-semibold">Verkooptarieven</h2>
+        <p className="mb-4 text-sm text-zand-500">Wat de klant betaalt. Deze staan los van de vergoeding voor de workshopdocent.</p>
+        <Verkoop tarieven={await haalVerkooptarieven()} />
       </Kaart>
 
       <Kaart className="mb-5">

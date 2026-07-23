@@ -5,6 +5,7 @@ import { vereisGebruiker } from "@/lib/auth";
 import { Kaart, PaginaKop, Badge, statusKleur, Rij } from "@/components/ui";
 import { datum, euro, label } from "@/lib/format";
 import { bouwAlleTijdschemas, bouwBevestiging, samenvatting, type BevSessie } from "@/lib/bevestiging";
+import { opdrachtPrijs } from "@/lib/tarieven";
 import Rondes from "./Rondes";
 import Bevestiging from "./Bevestiging";
 
@@ -38,6 +39,16 @@ export default async function ProjectDetail({ params }: { params: { id: string }
 
   const docentkosten = p.sessions.flatMap((s) => s.positions).reduce((n, x) => n + Number(x.vergoeding) * x.aantal, 0);
   const marge = Number(p.omzet) - docentkosten - Number(p.materiaalkosten);
+
+  // Wat deze dag volgens de tarieven op de website zou kosten
+  const richtprijs = opdrachtPrijs(
+    p.sessions.map((s) => ({
+      verkoopprijs60: Number(s.workshop.verkoopprijs ?? 195),
+      duurMinuten: s.workshop.standaardDuur,
+      rondes: s.rounds.reduce((n, r) => n + Math.max(1, r.aantalGroepen), 0),
+      deelnemers: s.deelnemers,
+    }))
+  );
 
   // Gegevens voor het tijdschema en de bevestigingsmail
   const bevSessies: BevSessie[] = p.sessions.map((s) => ({
@@ -165,12 +176,27 @@ export default async function ProjectDetail({ params }: { params: { id: string }
             <Rij label="Periode">{datum(p.startDatum)}{p.eindDatum && datum(p.eindDatum) !== datum(p.startDatum) ? ` tot ${datum(p.eindDatum)}` : ""}</Rij>
           </Kaart>
           <Kaart>
-            <h2 className="mb-2 font-semibold">Financieel</h2>
-            <Rij label="Omzet">{euro(p.omzet)}</Rij>
-            <Rij label="Verwachte kosten workshopdocenten">{euro(docentkosten)}</Rij>
+            <h2 className="mb-2 font-semibold">Wat het oplevert</h2>
+            <Rij label="Richtprijs volgens de site">
+              {euro(richtprijs.totaal)}
+              <span className="block text-xs font-normal text-zand-500">
+                {euro(richtprijs.workshops)} workshops
+                {richtprijs.extra > 0 ? ` · ${euro(richtprijs.extra)} extra deelnemers` : ""}
+                {` · ${euro(richtprijs.start)} starttarief`}
+              </span>
+            </Rij>
+            <Rij label="Afgesproken omzet">{euro(p.omzet)}</Rij>
+            <Rij label="Kosten workshopdocenten">{euro(docentkosten)}</Rij>
             <Rij label="Materiaalkosten">{euro(p.materiaalkosten)}</Rij>
-            <Rij label="Verwachte marge">
-              <span className={marge < 0 ? "text-red-700" : "text-emerald-700"}>{euro(marge)}</span>
+            <Rij label="Wat je overhoudt">
+              <span className={marge < 0 ? "font-semibold text-red-700" : "font-semibold text-emerald-700"}>
+                {euro(marge)}
+              </span>
+              {Number(p.omzet) > 0 && (
+                <span className="block text-xs font-normal text-zand-500">
+                  {Math.round((marge / Number(p.omzet)) * 100)}% van de omzet
+                </span>
+              )}
             </Rij>
           </Kaart>
           {(p.notitie || p.interneNotitie) && (
