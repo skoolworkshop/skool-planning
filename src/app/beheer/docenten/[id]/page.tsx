@@ -102,8 +102,13 @@ export default async function DocentDetail({ params }: { params: { id: string } 
 
         <Kaart>
           <h2 className="mb-2 font-semibold">Werk en vervoer</h2>
-          <Rij label="Samenwerking">{d.samenwerking}</Rij>
-          <Rij label="KvK-nummer">{d.kvk}</Rij>
+          <Rij label="Samenwerking">{d.samenwerking === "ZZP" ? "ZZP" : d.samenwerking === "FREELANCE" ? "Freelance" : d.samenwerking}</Rij>
+          {d.samenwerking === "ZZP" && (
+            <>
+              <Rij toonLeeg label="KvK-nummer">{d.kvk}</Rij>
+              <Rij toonLeeg label="Btw-nummer">{d.btwNummer}</Rij>
+            </>
+          )}
           <Rij label="Vervoer">
             {[d.eigenVervoer && "eigen vervoer", d.rijbewijs && "rijbewijs", d.ovMogelijk && "openbaar vervoer"].filter(Boolean).join(", ")}
           </Rij>

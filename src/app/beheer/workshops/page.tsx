@@ -59,10 +59,6 @@ export default async function WorkshopsPagina() {
                     <div className="flex justify-between"><dt>Duur</dt><dd>{w.standaardDuur} minuten</dd></div>
                     <div className="flex justify-between"><dt>Maximale groep</dt><dd>{w.maxGroep}</dd></div>
                     <div className="flex justify-between"><dt>Verkoopprijs per 60 min</dt><dd className="font-medium text-zand-700">{w.verkoopprijs ? euro(w.verkoopprijs) : "Niet ingevuld"}</dd></div>
-                    <div className="flex justify-between"><dt>Kosten workshopdocent</dt><dd>{euro(w.standaardVergoeding)}</dd></div>
-                    {w.verkoopprijs && (
-                      <div className="flex justify-between text-emerald-700"><dt>Marge per ronde</dt><dd>{euro(Number(w.verkoopprijs) - Number(w.standaardVergoeding))}</dd></div>
-                    )}
                     <div className="flex justify-between"><dt>Workshopdocenten met deze workshop</dt><dd>{w._count.skills}</dd></div>
                     <div className="flex justify-between"><dt>Ingepland</dt><dd>{w._count.sessions}x</dd></div>
                   </dl>

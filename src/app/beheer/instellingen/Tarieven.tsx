@@ -47,6 +47,11 @@ export default function TarievenFormulier({ tarieven }: { tarieven: Tarieven }) 
           <p className="mt-1 text-xs text-zand-500">In minuten enkele reis. Standaard 90.</p>
         </div>
         <div>
+          <label className="label" htmlFor="ovTariefPerKm">Richtbedrag openbaar vervoer</label>
+          <input id="ovTariefPerKm" name="ovTariefPerKm" type="number" step="0.01" min="0" defaultValue={tarieven.ovTariefPerKm} className="veld" />
+          <p className="mt-1 text-xs text-zand-500">Per kilometer, voor een schatting vooraf.</p>
+        </div>
+        <div>
           <label className="label" htmlFor="reistijdDeel">Deel van het uurtarief</label>
           <input id="reistijdDeel" name="reistijdDeel" type="number" step="0.05" min="0" max="1" defaultValue={tarieven.reistijdDeel} className="veld" />
           <p className="mt-1 text-xs text-zand-500">0,5 betekent het halve uurtarief.</p>
@@ -59,6 +64,7 @@ export default function TarievenFormulier({ tarieven }: { tarieven: Tarieven }) 
           <li>Gewerkte uren maal het uurtarief, met het dagminimum eroverheen.</li>
           <li>Reiskosten zijn de afstand van huis naar de locatie maal het kilometertarief, maal twee voor heen en terug.</li>
           <li>Duurt de enkele reis langer dan de drempel, dan komt daar reistijd bovenop tegen het halve uurtarief, ook heen en terug.</li>
+          <li>Gaat iemand met het openbaar vervoer, dan tonen we een schatting en een link naar 9292. De echte prijs volgt uit de declaratie.</li>
         </ul>
       </div>
 

@@ -39,10 +39,10 @@ export default function Tarief(p: Props) {
           <h2 className="font-semibold">Tarief en vervoer</h2>
           <button type="button" onClick={() => setOpen(true)} className="knop knop-ghost px-2 py-1 text-xs">Bewerken</button>
         </div>
-        <Rij label="Uurtarief">{p.uurtarief ? euro(p.uurtarief) : <span className="text-zand-400">Standaard, {euro(p.standaard.uurtarief)}</span>}</Rij>
-        <Rij label="Minimum per dag">{p.minDagtarief ? euro(p.minDagtarief) : <span className="text-zand-400">Standaard, {euro(p.standaard.minimumPerDag)}</span>}</Rij>
-        <Rij label="Kilometervergoeding">{p.kmVergoeding ? euro(p.kmVergoeding) : <span className="text-zand-400">Standaard, {euro(p.standaard.kmTarief)}</span>}</Rij>
-        <Rij label="Maximale reisafstand">{p.maxReisAfstand ? `${p.maxReisAfstand} km` : <span className="text-zand-400">Geen grens</span>}</Rij>
+        <Rij toonLeeg label="Uurtarief">{p.uurtarief ? euro(p.uurtarief) : <span className="text-zand-400">Standaard, {euro(p.standaard.uurtarief)}</span>}</Rij>
+        <Rij toonLeeg label="Minimum per dag">{p.minDagtarief ? euro(p.minDagtarief) : <span className="text-zand-400">Standaard, {euro(p.standaard.minimumPerDag)}</span>}</Rij>
+        <Rij toonLeeg label="Kilometervergoeding">{p.kmVergoeding ? euro(p.kmVergoeding) : <span className="text-zand-400">Standaard, {euro(p.standaard.kmTarief)}</span>}</Rij>
+        <Rij toonLeeg label="Maximale reisafstand">{p.maxReisAfstand ? `${p.maxReisAfstand} km` : <span className="text-zand-400">Geen grens</span>}</Rij>
         <Rij label="Tarief geldt vanaf">{p.tariefVanaf}</Rij>
         <Rij label="Interne afspraak">{p.tariefNotitie}</Rij>
         <Rij label="Laatst aangepast">{p.laatstOp ? `${p.laatstOp}${p.laatstDoor ? ` door ${p.laatstDoor}` : ""}` : ""}</Rij>

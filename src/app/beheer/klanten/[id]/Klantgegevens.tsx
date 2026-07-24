@@ -31,12 +31,12 @@ export default function Klantgegevens(p: Props) {
           <h2 className="font-semibold">Klantgegevens</h2>
           <button type="button" onClick={() => setOpen(true)} className="knop knop-ghost px-2 py-1 text-xs">Bewerken</button>
         </div>
-        <Rij label="Doelgroepen">{doelgroepenLabel(p.doelgroepen as never)}{p.doelgroepToelichting ? ` (${p.doelgroepToelichting})` : ""}</Rij>
-        {p.onderwijs && <Rij label="CJP schoolnummer">{p.cjpNummer}</Rij>}
-        <Rij label="Factuuradres">{p.factuurAdres}</Rij>
-        <Rij label="Factuur e-mail">{p.factuurEmail}</Rij>
+        <Rij toonLeeg label="Doelgroepen">{doelgroepenLabel(p.doelgroepen as never)}{p.doelgroepToelichting ? ` (${p.doelgroepToelichting})` : ""}</Rij>
+        {p.onderwijs && <Rij toonLeeg label="CJP schoolnummer">{p.cjpNummer}</Rij>}
+        <Rij toonLeeg label="Factuuradres">{p.factuurAdres}</Rij>
+        <Rij toonLeeg label="Factuur e-mail">{p.factuurEmail}</Rij>
         <Rij label="Betaaltermijn">{p.betaaltermijn} dagen</Rij>
-        <Rij label="Tags">{p.tags.join(", ")}</Rij>
+        <Rij toonLeeg label="Tags">{p.tags.join(", ")}</Rij>
       </>
     );
   }
