@@ -73,6 +73,14 @@ enum Doelgroep {
 }
 
 /// Wat een workshopdocent met een workshop mag. Alleen een beheerder zet dit.
+/// Hoe een workshopdocent naar een opdracht reist.
+enum Vervoer {
+  AUTO
+  OV
+  FIETS
+  ANDERS
+}
+
 enum Bevoegdheid {
   ZELFSTANDIG
   ASSISTEREN
@@ -221,6 +229,7 @@ model TeacherProfile {
   maxReisAfstand Int?
   regios       String[]      @default([])
   eigenVervoer Boolean       @default(false)
+  standaardVervoer Vervoer?  // waarmee hij meestal reist
   rijbewijs    Boolean       @default(false)
   ovMogelijk   Boolean       @default(true)
   talen        String[]      @default([])
@@ -568,6 +577,7 @@ model WorkRegistration {
   startTijd    String?
   eindTijd     String?
   uren         Decimal       @default(0) @db.Decimal(6, 2)
+  vervoer      Vervoer       @default(AUTO)
   kilometers   Int           @default(0)
   ovKosten     Decimal       @default(0) @db.Decimal(10, 2)
   parkeerkosten Decimal      @default(0) @db.Decimal(10, 2)

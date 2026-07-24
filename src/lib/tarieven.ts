@@ -16,6 +16,8 @@ export type Tarieven = {
   reistijdDrempelMinuten: number;
   /** Welk deel van het uurtarief geldt als reistijdvergoeding. */
   reistijdDeel: number;
+  /** Richtbedrag per kilometer voor het openbaar vervoer. */
+  ovTariefPerKm: number;
 };
 
 /** Wat de klant betaalt. Los van wat de workshopdocent krijgt. */
@@ -58,6 +60,7 @@ export const STANDAARD_TARIEVEN: Tarieven = {
   kmTarief: 0.25,
   reistijdDrempelMinuten: 90,
   reistijdDeel: 0.5,
+  ovTariefPerKm: 0.2,
 };
 
 function rond(n: number): number {
@@ -265,4 +268,94 @@ export function vergoedingVoorOpdracht(
       reis: reisUitleg,
     },
   };
+}
+
+/* ---------------- reizen met het openbaar vervoer ---------------- */
+
+/**
+ * Richtbedrag per kilometer voor het openbaar vervoer.
+ * Ongeveer het NS-tarief tweede klas. Aanpasbaar onder Instellingen.
+ */
+export const OV_TARIEF_PER_KM = 0.2;
+
+/**
+ * Schatting van de OV-kosten voor een retour.
+ *
+ * Let op: dit is een richtbedrag, geen echte prijs. 9292 en de NS hebben geen
+ * gratis koppeling waar we de exacte prijs uit kunnen halen. De workshopdocent
+ * declareert daarom achteraf wat hij echt betaald heeft. Deze schatting is er
+ * om vooraf een idee te geven en om jouw begroting te kunnen maken.
+ */
+export function ovSchatting(kmEnkeleReis: number | null, tariefPerKm = OV_TARIEF_PER_KM): number {
+  if (!kmEnkeleReis || kmEnkeleReis <= 0) return 0;
+  return Math.round(kmEnkeleReis * tariefPerKm * 2 * 100) / 100;
+}
+
+export type ReisOptie = {
+  vervoer: "AUTO" | "OV";
+  label: string;
+  bedrag: number;
+  regels: string[];
+};
+
+/**
+ * De reisopties naast elkaar, zodat een workshopdocent zelf kan kiezen.
+ * Ook iemand met een auto mag het openbaar vervoer pakken.
+ */
+export function reisOpties(
+  invoer: { kilometers?: number | null; reistijdMinuten?: number | null },
+  t: Tarieven = STANDAARD_TARIEVEN
+): ReisOptie[] {
+  const km = invoer.kilometers ?? 0;
+  const reistijd = invoer.reistijdMinuten ?? 0;
+  if (km <= 0) return [];
+
+  const autoKm = reiskosten(km, t);
+  const autoTijd = reistijdVergoeding(reistijd, t);
+  const autoRegels = [`${km} km heen en ${km} km terug, maal € ${t.kmTarief.toFixed(2)} per km`];
+  if (autoTijd > 0) {
+    autoRegels.push(
+      `Reistijd boven ${Math.round((t.reistijdDrempelMinuten / 60) * 10) / 10} uur, vergoed tegen € ${(t.uurtarief * t.reistijdDeel).toFixed(2)} per uur`
+    );
+  }
+
+  const ov = ovSchatting(km, t.ovTariefPerKm);
+  const ovRegels = [
+    `Richtbedrag voor een retour van ongeveer ${km} km`,
+    "Je declareert achteraf wat je echt betaald hebt",
+  ];
+  if (autoTijd > 0) ovRegels.push("Reistijdvergoeding geldt ook als je met het OV gaat");
+
+  return [
+    { vervoer: "AUTO", label: "Met de auto", bedrag: Math.round((autoKm + autoTijd) * 100) / 100, regels: autoRegels },
+    { vervoer: "OV", label: "Met het openbaar vervoer", bedrag: Math.round((ov + autoTijd) * 100) / 100, regels: ovRegels },
+  ];
+}
+
+/**
+ * Bouwt een link naar 9292 zodat de workshopdocent in één klik de echte
+ * reistijd en prijs ziet. We geven vertrekpunt, bestemming en aankomsttijd mee.
+ */
+export function ovLink(opties: {
+  vanPostcode?: string | null;
+  vanPlaats?: string | null;
+  naarPostcode?: string | null;
+  naarPlaats?: string | null;
+  datum?: Date | null;
+  aankomstTijd?: string | null;
+}): string | null {
+  const van = [opties.vanPostcode, opties.vanPlaats].filter(Boolean).join(" ").trim();
+  const naar = [opties.naarPostcode, opties.naarPlaats].filter(Boolean).join(" ").trim();
+  if (!van || !naar) return null;
+
+  const p = new URLSearchParams({ van, naar });
+  if (opties.datum) {
+    const d = opties.datum;
+    p.set("datum", `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
+  }
+  if (opties.aankomstTijd) {
+    p.set("tijd", opties.aankomstTijd);
+    p.set("aankomst", "1");
+  }
+  return `https://9292.nl/?${p.toString()}`;
 }

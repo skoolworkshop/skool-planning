@@ -156,6 +156,8 @@ export async function werkregistratieIndienen(assignmentId: string, formData: Fo
 
   const startTijd = String(formData.get("startTijd") ?? a.position.session.startTijd);
   const eindTijd = String(formData.get("eindTijd") ?? a.position.session.eindTijd);
+  const vervoerRuw = String(formData.get("vervoer") ?? "AUTO");
+  const vervoer = (["AUTO", "OV", "FIETS", "ANDERS"].includes(vervoerRuw) ? vervoerRuw : "AUTO") as "AUTO" | "OV" | "FIETS" | "ANDERS";
   const kilometers = Number(formData.get("kilometers") ?? 0);
   const ovKosten = Number(formData.get("ovKosten") ?? 0);
   const parkeerkosten = Number(formData.get("parkeerkosten") ?? 0);
@@ -184,11 +186,19 @@ export async function werkregistratieIndienen(assignmentId: string, formData: Fo
   );
   // Werk en reizen apart bewaren, zodat je later ziet waar het geld heen ging
   const basis = v.uurVergoeding;
-  const kmVergoeding = Math.round((v.reiskosten + v.reistijdVergoeding) * 100) / 100;
-  const totaal = v.totaal;
+
+  // Reist iemand met het OV, dan vergoeden we het echte kaartje in plaats van kilometers.
+  // De reistijdvergoeding geldt in beide gevallen, want de reistijd is dezelfde.
+  const kmVergoeding =
+    vervoer === "AUTO" || vervoer === "FIETS"
+      ? Math.round((v.reiskosten + v.reistijdVergoeding) * 100) / 100
+      : Math.round(v.reistijdVergoeding * 100) / 100;
+
+  const totaal = Math.round((basis + kmVergoeding + ovKosten + parkeerkosten + overigeKosten) * 100) / 100;
 
   const data = {
     teacherId: teacher.id,
+    vervoer,
     startTijd, eindTijd, uren, kilometers,
     ovKosten, parkeerkosten, overigeKosten,
     opmerking: opmerking || null,
@@ -206,7 +216,7 @@ export async function werkregistratieIndienen(assignmentId: string, formData: Fo
   });
 
   await db.workshopSession.update({ where: { id: a.position.sessionId }, data: { status: "UITGEVOERD" } });
-  await logAudit({ userId: user.id, actie: "WERKREGISTRATIE_INGEDIEND", entiteit: "Assignment", entiteitId: assignmentId, nieuw: { uren, kilometers, totaal }, ip: ipAdres() });
+  await logAudit({ userId: user.id, actie: "WERKREGISTRATIE_INGEDIEND", entiteit: "Assignment", entiteitId: assignmentId, nieuw: { uren, vervoer, kilometers, ovKosten, totaal }, ip: ipAdres() });
   revalidatePath("/docent/mijn");
   revalidatePath("/beheer/financieel");
   return { ok: true, totaal };
@@ -244,8 +254,12 @@ export async function profielOpslaan(formData: FormData): Promise<{ ok?: boolean
       postcode: tekst("postcode"),
       plaats: tekst("plaats"),
       samenwerking: tekst("samenwerking"),
-      kvk: tekst("kvk"),
-      btwNummer: tekst("btwNummer"),
+      standaardVervoer: (["AUTO", "OV", "FIETS", "ANDERS"].includes(tekst("standaardVervoer") ?? "")
+        ? tekst("standaardVervoer")
+        : null) as never,
+      // KvK en btw horen alleen bij een zzp'er, bij freelance maken we ze leeg
+      kvk: tekst("samenwerking") === "ZZP" ? tekst("kvk") : null,
+      btwNummer: tekst("samenwerking") === "ZZP" ? tekst("btwNummer") : null,
       iban: tekst("iban"),
       rekeninghouder: tekst("rekeninghouder"),
       maxReisAfstand: getal("maxReisAfstand"),

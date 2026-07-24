@@ -15,6 +15,7 @@ const SLEUTELS: (keyof Tarieven)[] = [
   "kmTarief",
   "reistijdDrempelMinuten",
   "reistijdDeel",
+  "ovTariefPerKm",
 ];
 
 /**

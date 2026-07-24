@@ -101,11 +101,27 @@ export function Stat({ titel, waarde, href, accent }: { titel: string; waarde: R
   return href ? <Link href={href}>{inhoud}</Link> : inhoud;
 }
 
-export function Rij({ label, children }: { label: string; children: ReactNode }) {
+/**
+ * Eén regel met een label en een waarde.
+ * Is er niets ingevuld, dan tonen we de regel helemaal niet.
+ * Wil je juist zien dat iets ontbreekt, zet dan toonLeeg aan.
+ */
+export function Rij({ label, children, toonLeeg = false }: { label: string; children: ReactNode; toonLeeg?: boolean }) {
+  const leeg =
+    children === null ||
+    children === undefined ||
+    children === false ||
+    children === "" ||
+    (Array.isArray(children) && children.filter(Boolean).length === 0);
+
+  if (leeg && !toonLeeg) return null;
+
   return (
     <div className="flex gap-3 border-b border-zand-200 py-2 text-sm last:border-0">
       <div className="w-32 shrink-0 text-zand-500 sm:w-40">{label}</div>
-      <div className="min-w-0 flex-1 break-words font-medium [overflow-wrap:anywhere]">{children || <span className="text-zand-400">Niet ingevuld</span>}</div>
+      <div className="min-w-0 flex-1 break-words font-medium [overflow-wrap:anywhere]">
+        {leeg ? <span className="text-zand-400">Niet ingevuld</span> : children}
+      </div>
     </div>
   );
 }
