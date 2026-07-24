@@ -10,6 +10,7 @@ type Profiel = {
   geboortedatum: string; noodcontact: string; noodcontactTel: string;
   straat: string; huisnummer: string; postcode: string; plaats: string;
   samenwerking: string; kvk: string; btwNummer: string; iban: string; rekeninghouder: string;
+  standaardVervoer: string;
   uurtarief: string; minDagtarief: string; kmVergoeding: string; maxReisAfstand: string;
   eigenVervoer: boolean; rijbewijs: boolean; ovMogelijk: boolean;
   talen: string; doelgroepen: string[];
@@ -19,6 +20,7 @@ type Profiel = {
 export default function ProfielFormulier({ profiel }: { profiel: Profiel }) {
   const [bezig, start] = useTransition();
   const [melding, setMelding] = useState<string | null>(null);
+  const [samenwerking, setSamenwerking] = useState(profiel.samenwerking);
   const [fout, setFout] = useState<string | null>(null);
 
   function opslaan(fd: FormData) {
@@ -65,14 +67,35 @@ export default function ProfielFormulier({ profiel }: { profiel: Profiel }) {
         <div className="mt-3 grid gap-3 sm:grid-cols-2">
           <div>
             <label className="label" htmlFor="samenwerking">Samenwerkingsvorm</label>
-            <select id="samenwerking" name="samenwerking" defaultValue={profiel.samenwerking} className="veld">
+            <select
+              id="samenwerking"
+              name="samenwerking"
+              value={samenwerking}
+              onChange={(e) => setSamenwerking(e.target.value)}
+              className="veld"
+            >
               <option value="">Kies</option>
-              <option value="ZZP">ZZP met eigen KvK</option>
-              <option value="FREELANCE">Freelance zonder KvK</option>
+              <option value="ZZP">ZZP</option>
+              <option value="FREELANCE">Freelance</option>
             </select>
           </div>
-          <Veld naam="kvk" titel="KVK nummer" waarde={profiel.kvk} />
-          <Veld naam="btwNummer" titel="Btw nummer" waarde={profiel.btwNummer} />
+          {/* KvK en btw horen alleen bij een zzp'er */}
+          {samenwerking === "ZZP" && (
+            <>
+              <Veld naam="kvk" titel="KVK nummer" waarde={profiel.kvk} />
+              <Veld naam="btwNummer" titel="Btw nummer" waarde={profiel.btwNummer} />
+            </>
+          )}
+          <div>
+            <label className="label" htmlFor="standaardVervoer">Waarmee reis je meestal?</label>
+            <select id="standaardVervoer" name="standaardVervoer" defaultValue={profiel.standaardVervoer} className="veld">
+              <option value="">Wisselend</option>
+              <option value="AUTO">Met de auto</option>
+              <option value="OV">Openbaar vervoer</option>
+              <option value="FIETS">Op de fiets</option>
+            </select>
+            <p className="mt-1 text-xs text-zand-500">Dit staat straks vast ingevuld bij je declaratie.</p>
+          </div>
           <Veld naam="iban" titel="IBAN" waarde={profiel.iban} verplicht />
           <Veld naam="rekeninghouder" titel="Naam rekeninghouder" waarde={profiel.rekeninghouder} />
         </div>

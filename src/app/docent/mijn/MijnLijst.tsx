@@ -16,12 +16,13 @@ type Opdracht = {
 };
 
 export default function MijnLijst({
-  tab, uitnodigingen, aanmeldingen, opdrachten,
-}: { tab: string; uitnodigingen: Uitnodiging[]; aanmeldingen: Aanmelding[]; opdrachten: Opdracht[] }) {
+  tab, uitnodigingen, aanmeldingen, opdrachten, standaardVervoer = "AUTO",
+}: { tab: string; uitnodigingen: Uitnodiging[]; aanmeldingen: Aanmelding[]; opdrachten: Opdracht[]; standaardVervoer?: string }) {
   const [bezig, start] = useTransition();
   const [fout, setFout] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [declaratieVoor, setDeclaratieVoor] = useState<string | null>(null);
+  const [vervoer, setVervoer] = useState(standaardVervoer || "AUTO");
 
   function doe(fn: () => Promise<{ ok?: boolean; fout?: string } | void>) {
     setFout(null);
@@ -156,9 +157,48 @@ export default function MijnLijst({
                   >
                     <div><label className="label">Werkelijke starttijd</label><input name="startTijd" type="time" defaultValue={o.startTijd} className="veld" /></div>
                     <div><label className="label">Werkelijke eindtijd</label><input name="eindTijd" type="time" defaultValue={o.eindTijd} className="veld" /></div>
-                    <div><label className="label">Gereden kilometers</label><input name="kilometers" type="number" min={0} defaultValue={0} className="veld" /></div>
-                    <div><label className="label">Openbaar vervoer in euro</label><input name="ovKosten" type="number" step="0.01" min={0} defaultValue={0} className="veld" /></div>
-                    <div><label className="label">Parkeerkosten in euro</label><input name="parkeerkosten" type="number" step="0.01" min={0} defaultValue={0} className="veld" /></div>
+                    <fieldset className="sm:col-span-2">
+                      <legend className="label">Hoe ben je gereisd?</legend>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          { waarde: "AUTO", label: "Met de auto" },
+                          { waarde: "OV", label: "Openbaar vervoer" },
+                          { waarde: "FIETS", label: "Op de fiets" },
+                          { waarde: "ANDERS", label: "Anders" },
+                        ].map((v) => (
+                          <label key={v.waarde}
+                            className="flex cursor-pointer items-center gap-2 rounded-full border border-zand-300 px-3 py-1.5 text-sm has-[:checked]:border-skool-400 has-[:checked]:bg-skool-50">
+                            <input type="radio" name="vervoer" value={v.waarde}
+                              checked={vervoer === v.waarde}
+                              onChange={() => setVervoer(v.waarde)}
+                              className="accent-skool-500" />
+                            {v.label}
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+
+                    {vervoer === "AUTO" && (
+                      <>
+                        <div><label className="label">Gereden kilometers, enkele reis</label><input name="kilometers" type="number" min={0} defaultValue={0} className="veld" /></div>
+                        <div><label className="label">Parkeerkosten in euro</label><input name="parkeerkosten" type="number" step="0.01" min={0} defaultValue={0} className="veld" /></div>
+                      </>
+                    )}
+
+                    {vervoer === "OV" && (
+                      <div className="sm:col-span-2">
+                        <label className="label">Wat heb je betaald aan het openbaar vervoer?</label>
+                        <input name="ovKosten" type="number" step="0.01" min={0} defaultValue={0} className="veld" />
+                        <p className="mt-1 text-xs text-zand-500">Het bedrag voor de hele reis, heen en terug.</p>
+                      </div>
+                    )}
+
+                    {vervoer === "FIETS" && (
+                      <div className="sm:col-span-2">
+                        <label className="label">Gefietste kilometers, enkele reis</label>
+                        <input name="kilometers" type="number" min={0} defaultValue={0} className="veld" />
+                      </div>
+                    )}
                     <div><label className="label">Overige kosten in euro</label><input name="overigeKosten" type="number" step="0.01" min={0} defaultValue={0} className="veld" /></div>
                     <div className="sm:col-span-2"><label className="label">Opmerking</label><textarea name="opmerking" rows={2} className="veld" /></div>
                     <div className="sm:col-span-2"><label className="label">Incident of bijzonderheid</label><textarea name="incident" rows={2} className="veld" /></div>

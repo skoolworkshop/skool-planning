@@ -51,6 +51,7 @@ export default async function ProfielPagina() {
     postcode: teacher.postcode ?? "",
     plaats: teacher.plaats ?? "",
     samenwerking: teacher.samenwerking ?? "",
+    standaardVervoer: teacher.standaardVervoer ?? "",
     kvk: teacher.kvk ?? "",
     btwNummer: teacher.btwNummer ?? "",
     iban: teacher.iban ?? "",

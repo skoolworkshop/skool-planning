@@ -77,6 +77,7 @@ export default async function MijnOpdrachten({ searchParams }: { searchParams: {
       </div>
 
       <MijnLijst
+        standaardVervoer={t.standaardVervoer ?? "AUTO"}
         tab={tab}
         uitnodigingen={uitnodigingen.map((a) => ({
           id: a.id,

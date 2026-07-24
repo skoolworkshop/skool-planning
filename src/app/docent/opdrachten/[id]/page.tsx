@@ -4,7 +4,7 @@ import { db } from "@/lib/db";
 import { vereisGebruiker } from "@/lib/auth";
 import { Kaart, Badge, Rij, Melding } from "@/components/ui";
 import { datum, datumLang, euro, afstandKm, reistijdMin } from "@/lib/format";
-import { vergoedingVoorOpdracht } from "@/lib/tarieven";
+import { vergoedingVoorOpdracht, reisOpties, ovLink } from "@/lib/tarieven";
 import { tarievenVoor } from "@/lib/tarief-acties";
 import Aanmeldknop from "./Aanmeldknop";
 
@@ -32,6 +32,17 @@ export default async function OpdrachtDetailDocent({ params }: { params: { id: s
   const toegewezen = s.positions.some((p) => p.assignments.some((a) => a.teacherId === t.id && !a.uitgevallen));
   const km = afstandKm(t, s.location ?? undefined);
   const tarieven = await tarievenVoor(t);
+  const opties = reisOpties({ kilometers: km, reistijdMinuten: km === null ? null : reistijdMin(km) }, tarieven);
+  const ovRoute = km !== null
+    ? ovLink({
+        vanPostcode: t.postcode,
+        vanPlaats: t.plaats,
+        naarPostcode: s.location?.postcode,
+        naarPlaats: s.location?.plaats,
+        datum: s.datum,
+        aankomstTijd: s.aanwezigVanaf ?? s.startTijd,
+      })
+    : null;
   const v = vergoedingVoorOpdracht(
     {
       aanwezigVanaf: s.aanwezigVanaf,
@@ -66,7 +77,7 @@ export default async function OpdrachtDetailDocent({ params }: { params: { id: s
         <Kaart>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="font-semibold">Wat je verdient</h2>
-            <span className="text-2xl font-bold text-skool-600">{euro(v.totaal)}</span>
+            <span className="text-2xl font-bold text-skool-600">{euro(v.werk)} plus reis</span>
           </div>
 
           <div className="space-y-3">
@@ -81,23 +92,43 @@ export default async function OpdrachtDetailDocent({ params }: { params: { id: s
               )}
             </div>
 
-            <div className="rounded-xl border border-zand-200 p-3">
-              <div className="flex items-baseline justify-between">
-                <span className="text-sm font-medium">Voor het reizen</span>
-                <span className="font-semibold">{euro(v.reisTotaal)}</span>
-              </div>
-              <ul className="mt-1 space-y-0.5 text-xs text-zand-500">
-                {v.uitleg.reis.map((r, i) => <li key={i}>{r}</li>)}
-              </ul>
-              {v.reiskosten > 0 && v.reistijdVergoeding > 0 && (
-                <p className="mt-1 text-xs text-zand-500">
-                  Kilometers {euro(v.reiskosten)} plus reistijd {euro(v.reistijdVergoeding)}
+            {opties.length > 0 ? (
+              <div className="rounded-xl border border-zand-200 p-3">
+                <div className="mb-2 text-sm font-medium">Voor het reizen</div>
+                <p className="mb-2 text-xs text-zand-500">
+                  Je kiest zelf hoe je gaat. Hieronder wat je in beide gevallen krijgt.
                 </p>
-              )}
-            </div>
+                <ul className="space-y-2">
+                  {opties.map((o) => (
+                    <li key={o.vervoer} className="rounded-lg bg-zand-100 p-2">
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-sm">{o.label}</span>
+                        <span className="font-semibold">
+                          {o.vervoer === "OV" ? "ongeveer " : ""}{euro(o.bedrag)}
+                        </span>
+                      </div>
+                      <ul className="mt-0.5 space-y-0.5 text-xs text-zand-500">
+                        {o.regels.map((r, i) => <li key={i}>{r}</li>)}
+                      </ul>
+                      {o.vervoer === "OV" && ovRoute && (
+                        <a href={ovRoute} target="_blank" rel="noopener noreferrer"
+                          className="mt-1 inline-block text-xs font-semibold text-skool-600 underline">
+                          Bekijk je route en de prijs op 9292
+                        </a>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-zand-200 p-3 text-xs text-zand-500">
+                De afstand is nog niet bekend, dus we kunnen de reiskosten niet berekenen.
+                Vul je postcode in bij je profiel.
+              </div>
+            )}
 
             <div className="flex items-baseline justify-between border-t border-zand-200 pt-3">
-              <span className="font-medium">Totaal</span>
+              <span className="font-medium">Totaal met de auto</span>
               <span className="text-lg font-bold text-skool-600">{euro(v.totaal)}</span>
             </div>
           </div>
